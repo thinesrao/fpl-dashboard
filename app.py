@@ -6,6 +6,7 @@ from google.oauth2.service_account import Credentials
 from gspread.exceptions import SpreadsheetNotFound, WorksheetNotFound, APIError
 import plotly.express as px
 from datetime import datetime, timezone
+import time
 
 # --- Configuration & Connection ---
 GOOGLE_SHEET_NAME = "FPL-Data-Pep"
@@ -40,7 +41,7 @@ def gspread_api_call(api_call_func, max_retries=5, initial_delay=3):
                 raise e # For other API errors, fail immediately
     raise Exception(f"Gspread API call failed after {max_retries} retries.")
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=600, show_spinner=False)
 def load_all_data():
     """
     Loads all worksheets in a single, efficient, and robust batch operation.
@@ -116,7 +117,17 @@ st.markdown(
 st.markdown("<h3 style='text-align: center;'>🏆 PepRoulette™ FPL Dashboard 🏆</h3>", unsafe_allow_html=True)
 
 try:
+            # --- Data Loading with a Progress Bar ---
+    progress_text = "Loading all award data. Please wait..."
+    my_bar = st.progress(0, text=progress_text)
+
+    # Wrap the slow data loading function with the progress bar
     all_data = load_all_data()
+
+    # Once data is loaded, update the progress bar to 100% and then remove it
+    my_bar.progress(100, text="Data loaded successfully!")
+    time.sleep(1) # Give a moment for the user to see "Success"
+    my_bar.empty()
 
     metadata_df = all_data.get("metadata")
     if metadata_df is None or metadata_df.empty:
