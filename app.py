@@ -21,25 +21,44 @@ def connect_to_gsheet():
     client = gspread.authorize(creds)
     return client.open(GOOGLE_SHEET_NAME)
 
-# --- Centralized data loading architecture ---
-def _read_from_gsheet_uncached(spreadsheet, worksheet_name):
-    """Internal function to read a single sheet. No caching here."""
-    try:
-        worksheet = spreadsheet.worksheet(worksheet_name)
-        return pd.DataFrame(worksheet.get_all_records())
-    except WorksheetNotFound:
-        st.warning(f"⚠️ Worksheet '{worksheet_name}' not found in your Google Sheet.")
-        return None
+# --- Centralized, Robust, and Efficient Data Loading ---
+def gspread_api_call(api_call_func, max_retries=5, initial_delay=3):
+    """
+    Definitive wrapper to handle all gspread API calls with exponential backoff.
+    """
+    import time # Import time locally to this function
+    for attempt in range(max_retries):
+        try:
+            return api_call_func()
+        except APIError as e:
+            if e.response.status_code == 429:
+                wait_time = initial_delay * (2 ** attempt)
+                print(f"API rate limit hit. Retrying in {wait_time} seconds...")
+                st.warning(f"API rate limit hit. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+            else:
+                raise e # For other API errors, fail immediately
+    raise Exception(f"Gspread API call failed after {max_retries} retries.")
 
 @st.cache_data(ttl=600)
 def load_all_data():
-    """Loads all required worksheets in a single batch to avoid hitting API limits."""
+    """
+    Loads all worksheets in a single, efficient, and robust batch operation.
+    """
+    print("Loading all data from Google Sheets...")
     spreadsheet = connect_to_gsheet()
-    all_worksheet_titles = [sh.title for sh in spreadsheet.worksheets()]
-
+    
+    # --- The Definitive Fix: Fetch all worksheet objects in one efficient batch call ---
+    all_worksheets = gspread_api_call(lambda: spreadsheet.worksheets())
+    
     data_dictionary = {}
-    for title in all_worksheet_titles:
-        data_dictionary[title] = _read_from_gsheet_uncached(spreadsheet, title)
+    for worksheet in all_worksheets:
+        print(f"  Processing worksheet: {worksheet.title}")
+        # Use a lambda to pass the get_all_records call to the retry wrapper
+        records = gspread_api_call(lambda: worksheet.get_all_records())
+        data_dictionary[worksheet.title] = pd.DataFrame(records)
+        
+    print("All data loaded successfully.")
     return data_dictionary
 
 # --- Styling Helper Function ---
