@@ -47,83 +47,19 @@ The dashboard includes 15+ custom awards to make your mini-league more competiti
 - **Chip Usage Tracking** - Wildcard, Free Hit, etc.
 - **Historical Data** - Season-long tracking
 
-## 🚀 Quick Start
+## 🚀 Usage
 
-### Prerequisites
-- Python 3.11+
-- Google Cloud Platform account
-- FPL league IDs
-
-### Installation
-
-1. **Clone the repository**
+### Running the Pipeline
 ```bash
-git clone https://github.com/thinesrao/fpl-dashboard.git
-cd fpl-dashboard
-```
-
-2. **Create virtual environment**
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. **Install dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-4. **Configure your league**
-Edit `data_pipeline.py` and update these variables:
-```python
-CLASSIC_LEAGUE_ID = 665732        # Your classic league ID
-H2H_LEAGUE_ID = 818813           # Your H2H league ID  
-FPL_CHALLENGE_LEAGUE_ID = 5008   # Your FPL Challenge league ID
-GOOGLE_SHEET_NAME = "FPL-Data-Pep"  # Your Google Sheet name
-```
-
-## ⚙️ Setup Guide
-
-### 1. **Google Sheets Setup**
-
-#### Create Google Service Account:
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing
-3. Enable Google Sheets API and Google Drive API
-4. Create Service Account credentials
-5. Download the JSON key file
-
-#### Set up Google Sheet:
-1. Create a new Google Sheet
-2. Name it according to `GOOGLE_SHEET_NAME`
-3. Share the sheet with your service account email
-4. The pipeline will automatically create required worksheets
-
-### 2. **Environment Setup**
-
-#### Local Development:
-```bash
-# Set up environment variables
-export GCP_CREDENTIALS='{"type": "service_account", ...}'  # Your service account JSON
-
-# Run the pipeline
+# Run the data pipeline
 python data_pipeline.py
 
 # Run the dashboard
 streamlit run app.py
 ```
 
-#### GitHub Actions (Automated):
-1. Go to your repository Settings → Secrets and variables → Actions
-2. Add secret: `GCP_CREDENTIALS` with your service account JSON
-3. The workflow will run automatically on schedule
-
-### 3. **Deploy to Streamlit Cloud**
-
-1. Go to [Streamlit Cloud](https://share.streamlit.io/)
-2. Connect your GitHub repository
-3. Add the `GCP_CREDENTIALS` secret in Streamlit Cloud settings
-4. Deploy!
+### Automated Updates
+The pipeline runs automatically via GitHub Actions on a schedule to keep data fresh.
 
 ## 📁 Project Structure
 
@@ -141,28 +77,13 @@ fpl-dashboard/
 └── README.md            # This file
 ```
 
-## 🔧 Configuration Options
+## 🔧 Configuration
 
-### Customizing Awards
-You can modify the awards logic in `data_pipeline.py`:
-
-```python
-# Example: Custom penalty calculation
-def calculate_custom_penalty(manager_data, gw):
-    # Your custom logic here
-    return penalty_score
-```
-
-### Adding New Awards
-1. Add award logic in `data_pipeline.py`
-2. Create corresponding worksheet in Google Sheets
-3. Update `app.py` to display the new award
-
-### Styling the Dashboard
-Modify `app.py` to customize:
-- Colors and themes
-- Layout and components
-- Additional visualizations
+The dashboard is configured through the `data_pipeline.py` file where you can:
+- Modify award calculations
+- Add new awards
+- Customize data processing logic
+- Update dashboard styling in `app.py`
 
 ## 📊 Data Sources
 
@@ -174,40 +95,14 @@ Modify `app.py` to customize:
 ## 🛠️ Troubleshooting
 
 ### Common Issues:
+- **API rate limits**: The pipeline includes automatic retry logic
+- **Missing data**: System handles incomplete data gracefully
+- **H2H issues**: Fixed pagination to fetch all matches
+- **Debug mode**: Enable logging in `data_pipeline.py` for troubleshooting
 
-**1. "League not found" error:**
-- Verify your league IDs are correct
-- Check if leagues are public or you have access
+## 🔄 Development
 
-**2. "Google Sheets permission denied":**
-- Ensure service account has edit access to the sheet
-- Check the sheet name matches `GOOGLE_SHEET_NAME`
-
-**3. "API rate limit exceeded":**
-- The pipeline includes automatic retry logic
-- Consider reducing update frequency
-
-**4. "Missing player data":**
-- Some players may have incomplete history
-- The system handles this gracefully with default values
-
-**5. "H2H monthly shows 0 vs 0":**
-- This was a known issue with pagination
-- Fixed in latest version - fetches all H2H matches
-
-### Debug Mode:
-```python
-# Enable debug logging in data_pipeline.py
-import logging
-logging.basicConfig(level=logging.DEBUG)
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+This is a private repository for personal FPL league analytics.
 
 ## 📝 License
 
@@ -222,10 +117,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-If you encounter any issues:
-1. Check the troubleshooting section
-2. Search existing issues
-3. Create a new issue with detailed information
+For issues or questions, check the troubleshooting section or review the code documentation.
 
 ## 🔄 Recent Updates
 
