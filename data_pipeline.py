@@ -264,7 +264,7 @@ def main():
                 long_format_data['transfer_king'].append({'gameweek': gw, 'manager_name': manager_name, 'score': transfer_score_gw})
                 
                 # --- Bench King: CORRECTED LOGIC ---
-                bench_points = sum(player_details_dict.get(pid, {}).get('history', [])[gw-1].get('total_points', 0) for pid in bench_squad_ids)
+                bench_points = sum(get_gw_score_from_history(player_details_dict.get(pid, {}).get('history', []), gw) for pid in bench_squad_ids)
                 long_format_data['bench_king'].append({'gameweek': gw, 'manager_name': manager_name, 'score': bench_points})
                 
                 dream_team_score = sum(4 if p_id in top_performers else 1 for p_id in active_squad_ids if p_id in dream_team_players)
