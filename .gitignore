@@ -14,4 +14,4 @@ __pycache__/
 
 # Documentation / Large files
 *.pdf
-*.md
+# *.md  # Allow README.md and other documentation
