@@ -90,6 +90,34 @@ def get_gw_score_from_history(history, gw):
         return 0
     return next((item.get('total_points', 0) for item in history if item.get('round') == gw), 0)
 
+def get_all_h2h_matches(league_id):
+    """Fetch ALL H2H matches with pagination."""
+    all_matches = []
+    page = 1
+    
+    while True:
+        url = f"{FPL_API_URL}leagues-h2h-matches/league/{league_id}/?page={page}"
+        data = get_json_from_url(url)
+        
+        if not data or 'results' not in data:
+            break
+            
+        matches = data['results']
+        if not matches:
+            break
+            
+        all_matches.extend(matches)
+        print(f"  Fetched page {page}: {len(matches)} matches")
+        page += 1
+        
+        # Safety break to avoid infinite loops
+        if page > 20:
+            print("  Warning: Stopped at page 20 to avoid infinite loop")
+            break
+    
+    print(f"  Total H2H matches fetched: {len(all_matches)}")
+    return {'results': all_matches}
+
 
 def main():
     print("--- Starting FPL Data Pipeline ---")
@@ -111,7 +139,10 @@ def main():
     fpl_data = get_json_from_url(BOOTSTRAP_STATIC_URL)
     classic_league_data = get_json_from_url(CLASSIC_LEAGUE_URL)
     h2h_league_data = get_json_from_url(H2H_LEAGUE_URL)
-    h2h_matches_data = get_json_from_url(H2H_MATCHES_URL)
+    
+    print("Fetching ALL H2H matches with pagination...")
+    h2h_matches_data = get_all_h2h_matches(H2H_LEAGUE_ID)
+    
     if not all([fpl_data, classic_league_data, h2h_league_data, h2h_matches_data]): print("Failed to fetch base data. Exiting."); return
 
     finished_gws = [gw['id'] for gw in fpl_data['events'] if gw['finished']]
@@ -558,15 +589,48 @@ def main():
 
             h2h_totals_end_of_month = h2h_history_df[h2h_history_df['gameweek'] == last_gw_of_month][['manager_id', 'total_h2h_points']]
             
-            if last_gw_of_prev_month > 0:
-                h2h_totals_start_of_month = h2h_history_df[h2h_history_df['gameweek'] == last_gw_of_prev_month][['manager_id', 'total_h2h_points']]
-                monthly_summary = h2h_totals_end_of_month.merge(h2h_totals_start_of_month, on='manager_id', suffixes=('_end', '_start'))
-                monthly_summary['Total_Head_to_Head_FPL_Point'] = monthly_summary['total_h2h_points_end'] - monthly_summary['total_h2h_points_start']
-            else:
-                monthly_summary = h2h_totals_end_of_month.rename(columns={'total_h2h_points': 'Total_Head_to_Head_FPL_Point'})
+            # FIXED: Calculate monthly H2H points from actual match results instead of standings differences
+            # This works around the issue where H2H standings don't update in the FPL API
+            monthly_matches = h2h_matches_df[h2h_matches_df['event'].isin(gws_in_month)]
+            
+            # Calculate monthly H2H points from match results
+            monthly_h2h_points = {}
+            for _, match in monthly_matches.iterrows():
+                manager1_id = match['entry_1_entry']
+                manager2_id = match['entry_2_entry']
+                score1 = match['entry_1_points']
+                score2 = match['entry_2_points']
+                
+                # Award H2H points: 3 for win, 1 for draw, 0 for loss
+                if score1 > score2:
+                    monthly_h2h_points[manager1_id] = monthly_h2h_points.get(manager1_id, 0) + 3
+                    monthly_h2h_points[manager2_id] = monthly_h2h_points.get(manager2_id, 0) + 0
+                elif score2 > score1:
+                    monthly_h2h_points[manager1_id] = monthly_h2h_points.get(manager1_id, 0) + 0
+                    monthly_h2h_points[manager2_id] = monthly_h2h_points.get(manager2_id, 0) + 3
+                else:  # Draw
+                    monthly_h2h_points[manager1_id] = monthly_h2h_points.get(manager1_id, 0) + 1
+                    monthly_h2h_points[manager2_id] = monthly_h2h_points.get(manager2_id, 0) + 1
+            
+            # Create monthly summary with calculated H2H points
+            monthly_summary = pd.DataFrame([
+                {'manager_id': mid, 'Total_Head_to_Head_FPL_Point': points} 
+                for mid, points in monthly_h2h_points.items()
+            ])
+            
+            # Add managers who didn't play any matches (0 points)
+            all_managers = set(h2h_totals_end_of_month['manager_id'].tolist())
+            played_managers = set(monthly_h2h_points.keys())
+            missing_managers = all_managers - played_managers
+            
+            for manager_id in missing_managers:
+                monthly_summary = pd.concat([
+                    monthly_summary, 
+                    pd.DataFrame([{'manager_id': manager_id, 'Total_Head_to_Head_FPL_Point': 0}])
+                ], ignore_index=True)
             
             # Deconstruct matches into individual results for FPL Points and Point Difference
-            monthly_matches = h2h_matches_df[h2h_matches_df['event'].isin(gws_in_month)]
+            # (monthly_matches already defined above)
             results_list = []
             for _, row in monthly_matches.iterrows():
                 results_list.append({'manager_id': row['entry_1_entry'], 'gameweek': row['event'], 'points': row['entry_1_points'], 'opponent_score': row['entry_2_points']})
