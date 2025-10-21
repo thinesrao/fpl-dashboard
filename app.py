@@ -262,13 +262,29 @@ try:
                 st.markdown("#### Monthly & Weekly Winners")
                 sub_tab_classic, sub_tab_h2h, sub_tab_weekly, sub_tab_challenge = st.tabs(["Classic Monthly", "H2H Monthly", "Manager of the Week", "FPL Challenge"])
                 with sub_tab_classic:
-                    classic_monthly_sheets = sorted([s for s in all_sheets if s.startswith('classic_monthly_')])
+                    # --- THIS IS THE DEFINITIVE FIX ---
+                    # Create a sorting key for months
+                    month_order = ["August", "September", "October", "November", "December", "January", "February", "March", "April", "May"]
+                    
+                    # Get the sheet names and extract the month part
+                    classic_monthly_sheets = [s for s in all_sheets if s.startswith('classic_monthly_')]
+                    
+                    # Sort the sheet names based on the calendar order of the months, in reverse (latest first)
+                    classic_monthly_sheets.sort(key=lambda s: month_order.index(s.replace('classic_monthly_', '')), reverse=True)
+                    
                     for sheet_name in classic_monthly_sheets:
                         st.markdown(f"##### {sheet_name.replace('classic_monthly_', '').replace('_', ' ').title()}")
                         df = all_data.get(sheet_name)
                         if df is not None: st.dataframe(df.set_index('Standings'), use_container_width=True)
                 with sub_tab_h2h:
-                    h2h_monthly_sheets = sorted([s for s in all_sheets if s.startswith('h2h_monthly_')])
+                    # --- APPLY THE SAME FIX HERE ---
+                    month_order = ["August", "September", "October", "November", "December", "January", "February", "March", "April", "May"]
+                    
+                    h2h_monthly_sheets = [s for s in all_sheets if s.startswith('h2h_monthly_')]
+                    
+                    # Sort the sheet names based on the calendar order, latest first
+                    h2h_monthly_sheets.sort(key=lambda s: month_order.index(s.replace('h2h_monthly_', '')), reverse=True)
+                    
                     for sheet_name in h2h_monthly_sheets:
                         st.markdown(f"##### {sheet_name.replace('h2h_monthly_', '').replace('_', ' ').title()}")
                         df = all_data.get(sheet_name)
