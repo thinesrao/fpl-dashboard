@@ -156,6 +156,10 @@ def main():
     )
     elements_df = pd.DataFrame(fpl_data['elements'])
     
+    # Create team lookup from teams data
+    teams_df = pd.DataFrame(fpl_data['teams'])
+    team_id_to_name = teams_df.set_index('id')['name'].to_dict()
+    
     player_id_to_type_map = elements_df.set_index('id')['element_type'].to_dict()
     
     print("Pre-fetching manager histories, transfers, and player details...")
@@ -184,9 +188,15 @@ def main():
         print("Warning: 'manual_penalty_data' sheet not found. Penalty King award will be zero.")
         manual_penalty_df = pd.DataFrame(columns=['Gameweek', 'Player_Name', 'Event_Type'])
 
-    # --- THIS IS THE CRITICAL MISSING LINE ---
-    # Create the 'phonebook' to map player web names to their FPL ID
-    player_name_to_id = elements_df.set_index('web_name')['id'].to_dict()
+    # --- Create player name mapping with team names for duplicates ---
+    # Add team name to each player
+    elements_df['team_name'] = elements_df['team'].map(team_id_to_name)
+    
+    # Create unique player display names: "Player (Team)" format
+    elements_df['display_name'] = elements_df['web_name'] + ' (' + elements_df['team_name'] + ')'
+    
+    # Create the 'phonebook' to map player display names to their FPL ID
+    player_name_to_id = elements_df.set_index('display_name')['id'].to_dict()
           
     long_format_data = {
         "golden_boot": [], "playmaker": [], "golden_glove": [], "best_gk": [], "best_def": [], "best_mid": [], "best_fwd": [], "best_vc": [],
@@ -726,6 +736,12 @@ def main():
 
     metadata_df = pd.DataFrame([{'last_finished_gw': last_finished_gw, 'last_updated_utc': datetime.now(timezone.utc).isoformat()}])
     worksheets_to_write["metadata"] = metadata_df
+    
+    # --- Generate _player_names sheet for dropdown reference ---
+    player_names_df = elements_df[['id', 'display_name', 'team_name']].copy()
+    player_names_df.columns = ['ID', 'Player_Name', 'Team_Name']
+    player_names_df = player_names_df.sort_values('Player_Name')
+    worksheets_to_write["_player_names"] = player_names_df
 
     print("Writing all processed data to Google Sheets...")
     for name, df in worksheets_to_write.items():
