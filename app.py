@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 import time
 
 # --- Configuration & Connection ---
-GOOGLE_SHEET_NAME = "FPL-Data-Pep"
+GOOGLE_SHEET_NAME = "FPL-Data-Pep-2026-27"
 
 @st.cache_resource(ttl=600)
 def connect_to_gsheet():

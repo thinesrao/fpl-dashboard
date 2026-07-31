@@ -23,7 +23,7 @@ from award_calculators import (
 CLASSIC_LEAGUE_ID = 665732       # TODO(2026/27): replace with the new classic league ID once admins confirm (registration due 22 Aug 2026)
 H2H_LEAGUE_ID = 818813           # TODO(2026/27): replace with the new H2H league ID once admins confirm
 FPL_CHALLENGE_LEAGUE_ID = 5008   # TODO(2026/27): replace with the new FPL Challenge league ID once admins confirm
-GOOGLE_SHEET_NAME = "FPL-Data-Pep"
+GOOGLE_SHEET_NAME = "FPL-Data-Pep-2026-27"
 
 # --- API Endpoints ---
 FPL_API_URL = "https://fantasy.premierleague.com/api/"
