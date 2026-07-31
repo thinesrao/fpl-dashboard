@@ -79,7 +79,7 @@ def calculate_bad_luck_h2h(h2h_matches, manager_ids):
     return {mid: longest_non_winning_streak(results) for mid, results in results_by_manager.items()}
 
 
-def calculate_reversed_motw(gw_scores):
+def calculate_reversed_motw(gw_scores, expected_manager_count=None):
     scores_by_gw = {}
     for record in gw_scores:
         scores_by_gw.setdefault(record["gameweek"], []).append((record["manager_id"], record["score"]))
@@ -87,6 +87,11 @@ def calculate_reversed_motw(gw_scores):
     counts = {}
     for entries in scores_by_gw.values():
         if not entries:
+            continue
+        if expected_manager_count is not None and len(entries) != expected_manager_count:
+            # A manager's history fetch likely failed for this gameweek; crediting the
+            # "lowest score" award off an incomplete roster risks a silent wrong winner,
+            # so skip the gameweek entirely rather than guess.
             continue
         min_score = min(score for _, score in entries)
         for manager_id, score in entries:

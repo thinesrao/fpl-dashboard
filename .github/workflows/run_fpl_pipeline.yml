@@ -6,12 +6,19 @@ on:
   # Run this workflow automatically on a schedule (every day at 8 AM UTC)
   schedule:
     - cron: '0 */6 * * *' # You can customize this. See https://crontab.guru/
-  
+
   # This line is ESSENTIAL for the "Run workflow" button to appear
   workflow_dispatch:
 
+  # Run the test suite on every push and PR (see the `test` job below)
+  push:
+  pull_request:
+
 jobs:
   build:
+    # Unchanged from before: only the schedule/workflow_dispatch triggers run the
+    # actual pipeline (it writes to the production Google Sheet), not push/pull_request.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -32,3 +39,25 @@ jobs:
         run: python3 data_pipeline.py
         env:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+
+  test:
+    # Independent of the `build` job: guards the money-affecting scoring math
+    # in award_calculators.py / data_pipeline.py on every push and PR.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11' # Match your development version
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run test suite
+        run: python -m pytest -v

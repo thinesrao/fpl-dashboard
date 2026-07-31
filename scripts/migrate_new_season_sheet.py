@@ -3,6 +3,10 @@
 Run manually, once, before the first 2026/27 pipeline run:
     python scripts/migrate_new_season_sheet.py --dry-run   # preview
     python scripts/migrate_new_season_sheet.py              # execute for real
+
+After running this for real, update GOOGLE_SHEET_NAME to "FPL-Data-Pep-2026-27"
+in BOTH data_pipeline.py and app.py -- until you do, both apps keep reading/writing
+the old "FPL-Data-Pep" sheet even though it's been renamed to the archive name.
 """
 import argparse
 import sys

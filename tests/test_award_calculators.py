@@ -180,3 +180,36 @@ def test_reversed_motw_ties_credit_all():
 
 def test_reversed_motw_empty_input():
     assert calculate_reversed_motw([]) == {}
+
+
+def test_calculate_bad_luck_h2h_ignores_matches_not_passed_in():
+    # Simulates the caller already having filtered out unplayed (0-0) future fixtures.
+    played_matches_only = [
+        {"gameweek": 1, "entry_1_entry": 1, "entry_1_points": 40, "entry_2_entry": 2, "entry_2_points": 60},
+        {"gameweek": 2, "entry_1_entry": 1, "entry_1_points": 30, "entry_2_entry": 2, "entry_2_points": 70},
+    ]
+    streaks = calculate_bad_luck_h2h(played_matches_only, manager_ids=[1, 2])
+    assert streaks == {1: 2, 2: 0}
+
+
+def test_reversed_motw_skips_gameweek_with_missing_manager_data():
+    gw_scores = [
+        {"manager_id": 1, "gameweek": 1, "score": 40},
+        {"manager_id": 2, "gameweek": 1, "score": 80},
+        # manager 3 is missing for gameweek 1 (e.g. a failed API fetch) -- only 2 of 3 expected managers present
+        {"manager_id": 1, "gameweek": 2, "score": 50},
+        {"manager_id": 2, "gameweek": 2, "score": 60},
+        {"manager_id": 3, "gameweek": 2, "score": 20},
+    ]
+    counts = calculate_reversed_motw(gw_scores, expected_manager_count=3)
+    # gameweek 1 skipped (only 2/3 managers present, count could be wrong); gameweek 2 counted normally
+    assert counts == {3: 1}
+
+
+def test_reversed_motw_expected_manager_count_none_disables_the_check():
+    gw_scores = [
+        {"manager_id": 1, "gameweek": 1, "score": 40},
+        {"manager_id": 2, "gameweek": 1, "score": 80},
+    ]
+    counts = calculate_reversed_motw(gw_scores)  # no expected_manager_count -> old behavior
+    assert counts == {1: 1}

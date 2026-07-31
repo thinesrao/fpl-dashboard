@@ -18,6 +18,8 @@ from award_calculators import (
 )
 
 # --- Configuration ---
+# NOTE: before updating the league IDs below, also run scripts/migrate_new_season_sheet.py
+# for real and update GOOGLE_SHEET_NAME (this file + app.py) -- see that script's docstring.
 CLASSIC_LEAGUE_ID = 665732       # TODO(2026/27): replace with the new classic league ID once admins confirm (registration due 22 Aug 2026)
 H2H_LEAGUE_ID = 818813           # TODO(2026/27): replace with the new H2H league ID once admins confirm
 FPL_CHALLENGE_LEAGUE_ID = 5008   # TODO(2026/27): replace with the new FPL Challenge league ID once admins confirm
@@ -435,7 +437,7 @@ def main():
         worksheets_to_write['half_season_second'] = build_standings_df(second_half_totals, manager_df)
 
     # --- Reversed MotW: most times scoring the league's lowest GW score ---
-    reversed_motw_totals = calculate_reversed_motw(gw_scores_list)
+    reversed_motw_totals = calculate_reversed_motw(gw_scores_list, expected_manager_count=len(manager_df))
     worksheets_to_write['reversed_motw'] = build_standings_df(reversed_motw_totals, manager_df)
 
     h2h_standings_results = h2h_league_data.get('standings',{}).get('results',[])
@@ -549,7 +551,10 @@ def main():
     h2h_matches_df = pd.DataFrame(h2h_matches_data.get('results', []))
     if not h2h_matches_df.empty:
         # --- Bad Luck H2H: longest non-winning streak ---
-        match_records = h2h_matches_df.rename(columns={'event': 'gameweek'}).to_dict('records')
+        # Only played gameweeks: unplayed future fixtures come back 0-0, which would
+        # be scored as draws and swamp a manager's real non-winning streak.
+        played_h2h_matches_df = h2h_matches_df[h2h_matches_df['event'] <= last_finished_gw]
+        match_records = played_h2h_matches_df.rename(columns={'event': 'gameweek'}).to_dict('records')
         bad_luck_totals = calculate_bad_luck_h2h(match_records, manager_df['manager_id'].tolist())
         worksheets_to_write['bad_luck_h2h'] = build_standings_df(bad_luck_totals, manager_df)
 
