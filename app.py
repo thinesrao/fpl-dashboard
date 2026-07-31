@@ -173,6 +173,7 @@ try:
             "expects_king": ["🔮 Expects King", "xGI"], "hardworking_af": ["💪 Hardworking AF", "Mins"],
             "half_season_first": ["🌗 Half Season Wonders (H1)", "Pts"], "half_season_second": ["🌓 Half Season Wonders (H2)", "Pts"],
             "bad_luck_h2h": ["😢 Bad Luck H2H", "GW Streak"],
+            "reversed_motw": ["🔻 Reversed MotW", "Times Lowest"],
         }
 
         st.sidebar.markdown("## ⚙️ Dashboard Controls")

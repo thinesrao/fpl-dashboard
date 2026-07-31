@@ -151,3 +151,32 @@ def test_calculate_bad_luck_h2h_two_managers():
 def test_calculate_bad_luck_h2h_manager_with_no_matches_is_zero():
     streaks = calculate_bad_luck_h2h([], manager_ids=[1, 2])
     assert streaks == {1: 0, 2: 0}
+
+
+from award_calculators import calculate_reversed_motw
+
+
+def test_reversed_motw_counts_clear_lowest():
+    gw_scores = [
+        {"manager_id": 1, "gameweek": 1, "score": 40},
+        {"manager_id": 2, "gameweek": 1, "score": 80},
+        {"manager_id": 1, "gameweek": 2, "score": 90},
+        {"manager_id": 2, "gameweek": 2, "score": 30},
+    ]
+    counts = calculate_reversed_motw(gw_scores)
+    assert counts == {1: 1, 2: 1}
+
+
+def test_reversed_motw_ties_credit_all():
+    gw_scores = [
+        {"manager_id": 1, "gameweek": 1, "score": 40},
+        {"manager_id": 2, "gameweek": 1, "score": 40},
+        {"manager_id": 3, "gameweek": 1, "score": 90},
+    ]
+    counts = calculate_reversed_motw(gw_scores)
+    assert counts == {1: 1, 2: 1}
+    assert 3 not in counts
+
+
+def test_reversed_motw_empty_input():
+    assert calculate_reversed_motw([]) == {}

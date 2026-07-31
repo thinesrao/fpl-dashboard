@@ -14,6 +14,7 @@ from award_calculators import (
     calculate_minutes_score,
     calculate_half_season_totals,
     calculate_bad_luck_h2h,
+    calculate_reversed_motw,
 )
 
 # --- Configuration ---
@@ -481,6 +482,10 @@ def main():
         worksheets_to_write['half_season_first'] = build_standings_df(first_half_totals, manager_df)
     if last_finished_gw >= 20:
         worksheets_to_write['half_season_second'] = build_standings_df(second_half_totals, manager_df)
+
+    # --- Reversed MotW: most times scoring the league's lowest GW score ---
+    reversed_motw_totals = calculate_reversed_motw(gw_scores_list)
+    worksheets_to_write['reversed_motw'] = build_standings_df(reversed_motw_totals, manager_df)
 
     h2h_standings_results = h2h_league_data.get('standings',{}).get('results',[])
     h2h_standings_df = pd.DataFrame(h2h_standings_results)[['rank', 'entry_name', 'player_name', 'total', 'points_for', 'entry']]

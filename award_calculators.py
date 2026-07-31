@@ -77,3 +77,19 @@ def calculate_bad_luck_h2h(h2h_matches, manager_ids):
             result = "W" if own_pts > opp_pts else ("L" if own_pts < opp_pts else "D")
             results_by_manager[manager_id].append(result)
     return {mid: longest_non_winning_streak(results) for mid, results in results_by_manager.items()}
+
+
+def calculate_reversed_motw(gw_scores):
+    scores_by_gw = {}
+    for record in gw_scores:
+        scores_by_gw.setdefault(record["gameweek"], []).append((record["manager_id"], record["score"]))
+
+    counts = {}
+    for entries in scores_by_gw.values():
+        if not entries:
+            continue
+        min_score = min(score for _, score in entries)
+        for manager_id, score in entries:
+            if score == min_score:
+                counts[manager_id] = counts.get(manager_id, 0) + 1
+    return counts
