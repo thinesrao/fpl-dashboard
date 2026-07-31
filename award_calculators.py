@@ -52,3 +52,28 @@ def calculate_half_season_totals(gw_scores, first_half_gws=range(1, 20), second_
         elif gw in second_set:
             second_half[manager_id] = second_half.get(manager_id, 0) + score
     return first_half, second_half
+
+
+def longest_non_winning_streak(results):
+    longest = current = 0
+    for result in results:
+        if result == "W":
+            current = 0
+        else:
+            current += 1
+            longest = max(longest, current)
+    return longest
+
+
+def calculate_bad_luck_h2h(h2h_matches, manager_ids):
+    results_by_manager = {mid: [] for mid in manager_ids}
+    for match in sorted(h2h_matches, key=lambda m: m["gameweek"]):
+        for manager_id, own_pts, opp_pts in (
+            (match["entry_1_entry"], match["entry_1_points"], match["entry_2_points"]),
+            (match["entry_2_entry"], match["entry_2_points"], match["entry_1_points"]),
+        ):
+            if manager_id not in results_by_manager:
+                continue
+            result = "W" if own_pts > opp_pts else ("L" if own_pts < opp_pts else "D")
+            results_by_manager[manager_id].append(result)
+    return {mid: longest_non_winning_streak(results) for mid, results in results_by_manager.items()}

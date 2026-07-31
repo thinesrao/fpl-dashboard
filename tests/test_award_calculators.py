@@ -115,3 +115,39 @@ def test_half_season_totals_empty_input():
     first_half, second_half = calculate_half_season_totals([])
     assert first_half == {}
     assert second_half == {}
+
+
+from award_calculators import longest_non_winning_streak, calculate_bad_luck_h2h
+
+
+def test_longest_non_winning_streak_all_wins_is_zero():
+    assert longest_non_winning_streak(["W", "W", "W"]) == 0
+
+
+def test_longest_non_winning_streak_resets_on_win():
+    assert longest_non_winning_streak(["W", "L", "L", "W", "D", "D", "D"]) == 3
+
+
+def test_longest_non_winning_streak_trailing_run():
+    assert longest_non_winning_streak(["L", "D", "L"]) == 3
+
+
+def test_longest_non_winning_streak_empty_is_zero():
+    assert longest_non_winning_streak([]) == 0
+
+
+def test_calculate_bad_luck_h2h_two_managers():
+    matches = [
+        {"gameweek": 1, "entry_1_entry": 1, "entry_1_points": 50, "entry_2_entry": 2, "entry_2_points": 60},
+        {"gameweek": 2, "entry_1_entry": 1, "entry_1_points": 40, "entry_2_entry": 2, "entry_2_points": 40},
+        {"gameweek": 3, "entry_1_entry": 1, "entry_1_points": 70, "entry_2_entry": 2, "entry_2_points": 30},
+    ]
+    streaks = calculate_bad_luck_h2h(matches, manager_ids=[1, 2])
+    # manager 1: L, D, W -> longest non-winning streak = 2 (the L, D run)
+    # manager 2: W, D, L -> longest non-winning streak = 2 (the D, L run)
+    assert streaks == {1: 2, 2: 2}
+
+
+def test_calculate_bad_luck_h2h_manager_with_no_matches_is_zero():
+    streaks = calculate_bad_luck_h2h([], manager_ids=[1, 2])
+    assert streaks == {1: 0, 2: 0}

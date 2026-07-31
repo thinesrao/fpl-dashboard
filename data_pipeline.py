@@ -13,6 +13,7 @@ from award_calculators import (
     calculate_xgi_score,
     calculate_minutes_score,
     calculate_half_season_totals,
+    calculate_bad_luck_h2h,
 )
 
 # --- Configuration ---
@@ -591,6 +592,11 @@ def main():
     # --- H2H Monthly Manager (as per screenshot) ---
     h2h_matches_df = pd.DataFrame(h2h_matches_data.get('results', []))
     if not h2h_matches_df.empty:
+        # --- Bad Luck H2H: longest non-winning streak ---
+        match_records = h2h_matches_df.rename(columns={'event': 'gameweek'}).to_dict('records')
+        bad_luck_totals = calculate_bad_luck_h2h(match_records, manager_df['manager_id'].tolist())
+        worksheets_to_write['bad_luck_h2h'] = build_standings_df(bad_luck_totals, manager_df)
+
         # Define the official FPL monthly gameweek ranges
         FPL_MONTH_MAP = {
             "August": list(range(1, 4)), "September": list(range(4, 7)),
