@@ -7,6 +7,7 @@ import json
 import time
 from datetime import datetime, timezone
 import os
+from award_calculators import calculate_dream_team_score, calculate_penalty_score
 
 # --- Configuration ---
 CLASSIC_LEAGUE_ID = 665732
@@ -208,6 +209,7 @@ def main():
     for gw in range(1, last_finished_gw + 1):
         live_gw_data = get_json_from_url(LIVE_EVENT_URL.format(GW=gw))
         if not live_gw_data: print(f"Could not fetch live data for GW{gw}. Skipping."); continue
+        live_stats_by_id = {p['id']: p['stats'] for p in live_gw_data.get('elements', [])}
         
         # Identify Dream Team players and top performers                                                
         dream_team_players = {p['id'] for p in live_gw_data.get('elements', []) if p.get('stats', {}).get('in_dreamteam')}
@@ -308,7 +310,7 @@ def main():
                 bench_points = sum(get_gw_score_from_history(player_details_dict.get(pid, {}).get('history', []), gw) for pid in bench_squad_ids)
                 long_format_data['bench_king'].append({'gameweek': gw, 'manager_name': manager_name, 'score': bench_points})
                 
-                dream_team_score = sum(4 if p_id in top_performers else 1 for p_id in active_squad_ids if p_id in dream_team_players)
+                dream_team_score = calculate_dream_team_score(active_squad_ids, dream_team_players, top_performers)
                 long_format_data['dream_team'].append({'gameweek': gw, 'manager_name': manager_name, 'score': dream_team_score})
                 
                 defensive_score = sum(next((p['stats'].get('defensive_contribution', 0) for p in live_gw_data.get('elements', []) if p['id'] == p_id), 0) for p_id in active_squad_ids)
@@ -321,29 +323,13 @@ def main():
                     if rank_prev and rank_now: rank_rise = max(0, rank_prev - rank_now)
                 long_format_data['shooting_stars'].append({'gameweek': gw, 'manager_name': manager_name, 'score': rank_rise})
                 
-                # --- Penalty King: DEFINITIVE HYBRID LOGIC (GW-by-GW) ---
-                penalty_score_gw = 0
-                
-                # Part 1: Process Automated Penalty Saves from LIVE gameweek data
-                for player_id in active_squad_ids:
-                    live_player_stats = next((p['stats'] for p in live_gw_data.get('elements', []) if p['id'] == player_id), None)
-                    if live_player_stats:
-                        penalty_score_gw += live_player_stats.get('penalties_saved', 0) * 3
-                
-                # Part 2: Process Manual Inputs for Scored & Won
+                # --- Penalty King: automatic (saved/missed) + manual (scored/won) ---
                 gw_penalty_events = manual_penalty_df[manual_penalty_df['Gameweek'] == gw]
-                if not gw_penalty_events.empty:
-                    for _, event in gw_penalty_events.iterrows():
-                        player_name = event['Player_Name']
-                        event_type = event['Event_Type']
-                        player_id = player_name_to_id.get(player_name)
-                        
-                        if player_id and player_id in active_squad_ids:
-                            if event_type == 'Penalty Scored':
-                                penalty_score_gw += 1
-                            elif event_type == 'Penalty Won':
-                                penalty_score_gw += 1
-                
+                manual_events = [
+                    {'player_id': player_name_to_id.get(row['Player_Name']), 'event_type': row['Event_Type']}
+                    for _, row in gw_penalty_events.iterrows()
+                ]
+                penalty_score_gw = calculate_penalty_score(active_squad_ids, live_stats_by_id, manual_events)
                 long_format_data['penalty_king'].append({'gameweek': gw, 'manager_name': manager_name, 'score': penalty_score_gw})
                 
                 # --- Best Underdog (Definitive Self-Sufficient Logic) ---
