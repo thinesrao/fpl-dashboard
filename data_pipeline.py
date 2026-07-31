@@ -7,7 +7,12 @@ import json
 import time
 from datetime import datetime, timezone
 import os
-from award_calculators import calculate_dream_team_score, calculate_penalty_score
+from award_calculators import (
+    calculate_dream_team_score,
+    calculate_penalty_score,
+    calculate_xgi_score,
+    calculate_minutes_score,
+)
 
 # --- Configuration ---
 CLASSIC_LEAGUE_ID = 665732
@@ -201,7 +206,8 @@ def main():
           
     long_format_data = {
         "golden_boot": [], "playmaker": [], "golden_glove": [], "best_gk": [], "best_def": [], "best_mid": [], "best_fwd": [], "best_vc": [],
-        "transfer_king": [], "bench_king": [], "dream_team": [], "defensive_king": [], "shooting_stars": [], "best_underdog": [], "penalty_king": []
+        "transfer_king": [], "bench_king": [], "dream_team": [], "defensive_king": [], "shooting_stars": [], "best_underdog": [], "penalty_king": [],
+        "expects_king": [], "hardworking_af": []
     }
     fpl_challenge_gw_scores = []
     
@@ -331,7 +337,13 @@ def main():
                 ]
                 penalty_score_gw = calculate_penalty_score(active_squad_ids, live_stats_by_id, manual_events)
                 long_format_data['penalty_king'].append({'gameweek': gw, 'manager_name': manager_name, 'score': penalty_score_gw})
-                
+
+                xgi_gw = calculate_xgi_score(active_squad_ids, live_stats_by_id)
+                long_format_data['expects_king'].append({'gameweek': gw, 'manager_name': manager_name, 'score': xgi_gw})
+
+                minutes_gw = calculate_minutes_score(active_squad_ids, live_stats_by_id)
+                long_format_data['hardworking_af'].append({'gameweek': gw, 'manager_name': manager_name, 'score': minutes_gw})
+
                 # --- Best Underdog (Definitive Self-Sufficient Logic) ---
                 underdog_score = 0
                 if gw > 1 and not time_machine_df.empty:
@@ -373,16 +385,20 @@ def main():
     worksheets_to_write = {}
     
     # Process special historical awards
+    FLOAT_AWARDS = {'expects_king'}
     for award_name, history_data in long_format_data.items():
         if not history_data: continue
         long_df = pd.DataFrame(history_data)
-        wide_df = long_df.pivot(index='manager_name', columns='gameweek', values='score').fillna(0).astype(int)
+        wide_df = long_df.pivot(index='manager_name', columns='gameweek', values='score').fillna(0)
+        wide_df = wide_df.round(2) if award_name in FLOAT_AWARDS else wide_df.astype(int)
         wide_df.columns = [f"GW{col}" for col in wide_df.columns]
-        
+
         # --- THIS IS THE DEFINITIVE FIX ---
         # All historical awards should have their gameweek scores summed up for the total.
         # The logic has been simplified to correctly calculate the sum for ALL historical awards.
         wide_df['Total'] = wide_df[[col for col in wide_df.columns if col.startswith('GW')]].sum(axis=1)
+        if award_name in FLOAT_AWARDS:
+            wide_df['Total'] = wide_df['Total'].round(2)
                 
         final_df = wide_df.reset_index().merge(manager_df[['manager_name', 'team_name']], on='manager_name')
         final_df['Standings'] = final_df['Total'].rank(method='min', ascending=False).astype(int)

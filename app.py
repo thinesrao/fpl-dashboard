@@ -169,7 +169,8 @@ try:
             "defensive_king": ["🧱 Defensive King", "Contribution"], "best_underdog": ["🥊 Best Underdog", "Wins"],
             "penalty_king": ["🎯 Penalty King", "Pts"], "steady_king": ["🧘 Steady King", "Pts/Transfer"],
             "highest_gw_score": ["🚀 Highest GW Score", "Pts"], "freehit_king": ["🃏 Free Hit King", "Pts"],
-            "benchboost_king": ["📈 Bench Boost King", "Pts"], "triplecaptain_king": ["©️³ Triple Captain King", "Pts"]
+            "benchboost_king": ["📈 Bench Boost King", "Pts"], "triplecaptain_king": ["©️³ Triple Captain King", "Pts"],
+            "expects_king": ["🔮 Expects King", "xGI"], "hardworking_af": ["💪 Hardworking AF", "Mins"],
         }
 
         st.sidebar.markdown("## ⚙️ Dashboard Controls")

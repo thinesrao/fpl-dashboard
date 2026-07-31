@@ -61,3 +61,35 @@ def test_penalty_score_ignores_unmatched_player_name():
         active_squad_ids=[20], live_stats_by_id={}, manual_events=manual_events
     )
     assert score == 0
+
+
+from award_calculators import calculate_xgi_score, calculate_minutes_score
+
+
+def test_xgi_score_sums_expected_goals_and_assists():
+    live_stats_by_id = {
+        1: {"expected_goals": "0.50", "expected_assists": "0.25"},
+        2: {"expected_goals": "0.10", "expected_assists": "0.00"},
+    }
+    score = calculate_xgi_score([1, 2], live_stats_by_id)
+    assert score == 0.85
+
+
+def test_xgi_score_handles_missing_player_and_missing_fields():
+    live_stats_by_id = {1: {}}
+    score = calculate_xgi_score([1, 2], live_stats_by_id)  # player 2 has no stats at all
+    assert score == 0.0
+
+
+def test_xgi_score_rounds_to_two_decimal_places():
+    live_stats_by_id = {1: {"expected_goals": "0.111", "expected_assists": "0.222"}}
+    assert calculate_xgi_score([1], live_stats_by_id) == 0.33
+
+
+def test_minutes_score_sums_minutes_played():
+    live_stats_by_id = {1: {"minutes": 90}, 2: {"minutes": 63}}
+    assert calculate_minutes_score([1, 2], live_stats_by_id) == 153
+
+
+def test_minutes_score_missing_player_counts_zero():
+    assert calculate_minutes_score([1, 2], {1: {"minutes": 90}}) == 90

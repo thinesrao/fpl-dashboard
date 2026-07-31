@@ -26,3 +26,17 @@ def calculate_penalty_score(active_squad_ids, live_stats_by_id, manual_events):
         if event["player_id"] in active_squad_ids and event["event_type"] in ("Penalty Scored", "Penalty Won"):
             score += 1
     return score
+
+
+def calculate_xgi_score(active_squad_ids, live_stats_by_id):
+    total = 0.0
+    for pid in active_squad_ids:
+        stats = live_stats_by_id.get(pid)
+        if stats:
+            total += float(stats.get("expected_goals", 0) or 0)
+            total += float(stats.get("expected_assists", 0) or 0)
+    return round(total, 2)
+
+
+def calculate_minutes_score(active_squad_ids, live_stats_by_id):
+    return sum(live_stats_by_id.get(pid, {}).get("minutes", 0) for pid in active_squad_ids)
