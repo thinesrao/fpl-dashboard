@@ -186,15 +186,6 @@ def main():
     manager_transfers = {row['manager_id']: get_json_from_url(ENTRY_TRANSFERS_URL.format(TID=row['manager_id'])) for _, row in manager_df.iterrows()}
     player_details_dict = {pid: get_json_from_url(ELEMENT_SUMMARY_URL.format(EID=pid)) for pid in elements_df['id']}
 
-    # --- THE DEFINITIVE TIME MACHINE (based on your superior logic) ---
-    print("Loading historical rank 'Time Machine' from Google Sheet...")
-    try:
-        time_machine_sheet = spreadsheet.worksheet("_time_machine_ranks")
-        time_machine_df = pd.DataFrame(time_machine_sheet.get_all_records())
-    except gspread.WorksheetNotFound:
-        print("  '_time_machine_ranks' not found. Will be created at the end of this run.")
-        time_machine_df = pd.DataFrame(columns=['gameweek', 'manager_id', 'manager_name', 'classic_rank', 'h2h_rank'])
-    
     # --- Read the manual penalty data and create player name map ---
     print("Fetching manual penalty data...")
     try:
@@ -219,7 +210,7 @@ def main():
           
     long_format_data = {
         "golden_boot": [], "playmaker": [], "golden_glove": [], "best_gk": [], "best_def": [], "best_mid": [], "best_fwd": [], "best_vc": [],
-        "transfer_king": [], "bench_king": [], "dream_team": [], "defensive_king": [], "shooting_stars": [], "best_underdog": [], "penalty_king": [],
+        "transfer_king": [], "bench_king": [], "dream_team": [], "defensive_king": [], "shooting_stars": [], "penalty_king": [],
         "expects_king": [], "hardworking_af": []
     }
     fpl_challenge_gw_scores = []
@@ -357,40 +348,6 @@ def main():
                 minutes_gw = calculate_minutes_score(active_squad_ids, live_stats_by_id)
                 long_format_data['hardworking_af'].append({'gameweek': gw, 'manager_name': manager_name, 'score': minutes_gw})
 
-                # --- Best Underdog (Definitive Self-Sufficient Logic) ---
-                underdog_score = 0
-                if gw > 1 and not time_machine_df.empty:
-                    h2h_matches_df = pd.DataFrame(h2h_matches_data.get('results', []))
-                    match = h2h_matches_df[((h2h_matches_df['event'] == gw) & (h2h_matches_df['entry_1_entry'] == manager_id)) | ((h2h_matches_df['event'] == gw) & (h2h_matches_df['entry_2_entry'] == manager_id))]
-                    
-                    if not match.empty:
-                        match = match.iloc[0]
-                        opponent_id = None
-                        
-                        if match['entry_1_entry'] == manager_id and match['entry_1_points'] > match['entry_2_points']:
-                            opponent_id = match['entry_2_entry']
-                        elif match['entry_2_entry'] == manager_id and match['entry_2_points'] > match['entry_1_points']:
-                            opponent_id = match['entry_1_entry']
-                        
-                        if opponent_id:
-                            # Use the 'Time Machine' to get the opponent's rank from the PREVIOUS gameweek
-                            prev_gw_ranks = time_machine_df[time_machine_df['gameweek'] == gw - 1]
-                            opponent_ranks = prev_gw_ranks[prev_gw_ranks['manager_id'] == opponent_id]
-                            
-                            if not opponent_ranks.empty:
-                                opp_classic_rank_prev = opponent_ranks.iloc[0]['classic_rank']
-                                opp_h2h_rank_prev = opponent_ranks.iloc[0]['h2h_rank']
-                                
-                                # Apply the scoring hierarchy correctly
-                                if (opp_classic_rank_prev == 1 and opp_h2h_rank_prev == 1):
-                                    underdog_score = 3
-                                elif (opp_classic_rank_prev == 1 or opp_h2h_rank_prev == 1):
-                                    underdog_score = 2
-                                elif (2 <= opp_classic_rank_prev <= 4 or 2 <= opp_h2h_rank_prev <= 4):
-                                    underdog_score = 1
-                                    
-                long_format_data['best_underdog'].append({'gameweek': gw, 'manager_name': manager_name, 'score': underdog_score})
-                                        
         print(f"  Processed Gameweek {gw}/{last_finished_gw}")
         if gw < last_finished_gw: time.sleep(1)
 
@@ -423,16 +380,10 @@ def main():
         worksheets_to_write[award_name] = final_df[column_order]
 
     # Process single-value special awards
-    single_value_awards = {"steady_king": [], "highest_gw_score": [], "freehit_king": [], "benchboost_king": [], "triplecaptain_king": []}
+    single_value_awards = {"highest_gw_score": [], "freehit_king": [], "benchboost_king": [], "triplecaptain_king": []}
     for _, manager in manager_df.iterrows():
         manager_id, manager_name, team_name = manager['manager_id'], manager['manager_name'], manager['team_name']
         history = manager_histories.get(manager_id, {})
-        transfers = manager_transfers.get(manager_id, [])
-        
-        chip_weeks = {c['event'] for c in history.get('chips', [])} if history else set()
-        total_transfers = len([t for t in transfers if t['event'] not in chip_weeks])
-        total_points = history.get('current', [])[-1].get('total_points', 0) if history and history.get('current') else 0
-        single_value_awards['steady_king'].append({'Manager': manager_name, 'Team': team_name, 'Score': total_points / total_transfers if total_transfers > 0 else 0})
 
         fh_scores, bb_scores, tc_scores, normal_scores = [], [], [], []
         if history and 'current' in history:
@@ -737,33 +688,6 @@ def main():
             {"Winner": cup_winner_name, "Team": cup_winner_team}
         ])
         worksheets_to_write["cup_winner"] = cup_df
-
-    # --- Update the Time Machine for the next run ---
-    print("Updating the '_time_machine_ranks' sheet...")
-    
-    classic_ranks_now = {s['entry']: s['rank'] for s in classic_league_data.get('standings', {}).get('results', [])}
-    h2h_ranks_now = {s['entry']: s['rank'] for s in h2h_league_data.get('standings', {}).get('results', [])}
-    
-    # Remove any old data for the current gameweek to prevent duplicates
-    time_machine_df = time_machine_df[time_machine_df['gameweek'] != last_finished_gw]
-    
-    # Create new rows for the current gameweek's final ranks
-    new_ranks_list = []
-    for _, manager in manager_df.iterrows():
-        manager_id = manager['manager_id']
-        new_ranks_list.append({
-            'gameweek': last_finished_gw,
-            'manager_id': manager_id,
-            'manager_name': manager['manager_name'],
-            'classic_rank': classic_ranks_now.get(manager_id, 999),
-            'h2h_rank': h2h_ranks_now.get(manager_id, 999)
-        })
-    
-    new_ranks_df = pd.DataFrame(new_ranks_list)
-    
-    # Combine old and new data and save
-    updated_time_machine_df = pd.concat([time_machine_df, new_ranks_df]).sort_values(by=['gameweek', 'classic_rank'])
-    worksheets_to_write["_time_machine_ranks"] = updated_time_machine_df
 
     metadata_df = pd.DataFrame([{'last_finished_gw': last_finished_gw, 'last_updated_utc': datetime.now(timezone.utc).isoformat()}])
     worksheets_to_write["metadata"] = metadata_df
