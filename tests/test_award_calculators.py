@@ -93,3 +93,25 @@ def test_minutes_score_sums_minutes_played():
 
 def test_minutes_score_missing_player_counts_zero():
     assert calculate_minutes_score([1, 2], {1: {"minutes": 90}}) == 90
+
+
+from award_calculators import calculate_half_season_totals
+
+
+def test_half_season_totals_splits_gw1_19_and_gw20_38():
+    gw_scores = [
+        {"manager_id": 1, "gameweek": 5, "score": 60},
+        {"manager_id": 1, "gameweek": 19, "score": 55},
+        {"manager_id": 1, "gameweek": 20, "score": 70},
+        {"manager_id": 1, "gameweek": 38, "score": 65},
+        {"manager_id": 2, "gameweek": 19, "score": 40},
+    ]
+    first_half, second_half = calculate_half_season_totals(gw_scores)
+    assert first_half == {1: 115, 2: 40}
+    assert second_half == {1: 135}
+
+
+def test_half_season_totals_empty_input():
+    first_half, second_half = calculate_half_season_totals([])
+    assert first_half == {}
+    assert second_half == {}

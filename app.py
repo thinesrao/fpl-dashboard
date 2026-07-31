@@ -171,6 +171,7 @@ try:
             "highest_gw_score": ["🚀 Highest GW Score", "Pts"], "freehit_king": ["🃏 Free Hit King", "Pts"],
             "benchboost_king": ["📈 Bench Boost King", "Pts"], "triplecaptain_king": ["©️³ Triple Captain King", "Pts"],
             "expects_king": ["🔮 Expects King", "xGI"], "hardworking_af": ["💪 Hardworking AF", "Mins"],
+            "half_season_first": ["🌗 Half Season Wonders (H1)", "Pts"], "half_season_second": ["🌓 Half Season Wonders (H2)", "Pts"],
         }
 
         st.sidebar.markdown("## ⚙️ Dashboard Controls")

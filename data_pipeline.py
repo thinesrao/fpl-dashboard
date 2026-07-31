@@ -12,6 +12,7 @@ from award_calculators import (
     calculate_penalty_score,
     calculate_xgi_score,
     calculate_minutes_score,
+    calculate_half_season_totals,
 )
 
 # --- Configuration ---
@@ -123,6 +124,16 @@ def get_all_h2h_matches(league_id):
     
     print(f"  Total H2H matches fetched: {len(all_matches)}")
     return {'results': all_matches}
+
+
+def build_standings_df(score_by_manager_id, manager_df):
+    """Build a Standings/Team/Manager/Score dataframe from a {manager_id: score} mapping."""
+    rows = [{'manager_id': mid, 'Score': score_by_manager_id.get(mid, 0)} for mid in manager_df['manager_id']]
+    df = pd.DataFrame(rows).merge(manager_df[['manager_id', 'manager_name', 'team_name']], on='manager_id')
+    df.rename(columns={'manager_name': 'Manager', 'team_name': 'Team'}, inplace=True)
+    df = df.sort_values(by='Score', ascending=False).reset_index(drop=True)
+    df['Standings'] = df['Score'].rank(method='min', ascending=False).astype(int)
+    return df[['Standings', 'Team', 'Manager', 'Score']]
 
 
 def main():
@@ -462,7 +473,14 @@ def main():
     classic_standings_df.rename(columns={'rank': 'Standings', 'entry_name': 'Team', 'player_name': 'Manager', 'total': 'Total', 'entry': 'manager_id'}, inplace=True)
     classic_standings_df = classic_standings_df.merge(gw_scores_wide, on='manager_id', how='left').drop(columns=['manager_id'])
     worksheets_to_write["classic_league_standings"] = classic_standings_df
-    
+
+    # --- Half Season Wonders (GW1-19 and GW20-38) ---
+    first_half_totals, second_half_totals = calculate_half_season_totals(gw_scores_list)
+    if last_finished_gw >= 1:
+        worksheets_to_write['half_season_first'] = build_standings_df(first_half_totals, manager_df)
+    if last_finished_gw >= 20:
+        worksheets_to_write['half_season_second'] = build_standings_df(second_half_totals, manager_df)
+
     h2h_standings_results = h2h_league_data.get('standings',{}).get('results',[])
     h2h_standings_df = pd.DataFrame(h2h_standings_results)[['rank', 'entry_name', 'player_name', 'total', 'points_for', 'entry']]
     h2h_standings_df.rename(columns={'rank': 'Standings', 'entry_name': 'Team', 'player_name': 'Manager', 'total': 'Total H2H Point', 'points_for': 'Total FPL Point', 'entry': 'manager_id'}, inplace=True)

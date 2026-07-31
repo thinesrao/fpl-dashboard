@@ -40,3 +40,15 @@ def calculate_xgi_score(active_squad_ids, live_stats_by_id):
 
 def calculate_minutes_score(active_squad_ids, live_stats_by_id):
     return sum(live_stats_by_id.get(pid, {}).get("minutes", 0) for pid in active_squad_ids)
+
+
+def calculate_half_season_totals(gw_scores, first_half_gws=range(1, 20), second_half_gws=range(20, 39)):
+    first_half, second_half = {}, {}
+    first_set, second_set = set(first_half_gws), set(second_half_gws)
+    for record in gw_scores:
+        manager_id, gw, score = record["manager_id"], record["gameweek"], record["score"]
+        if gw in first_set:
+            first_half[manager_id] = first_half.get(manager_id, 0) + score
+        elif gw in second_set:
+            second_half[manager_id] = second_half.get(manager_id, 0) + score
+    return first_half, second_half
