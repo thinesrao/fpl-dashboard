@@ -3,6 +3,7 @@ import type { DashboardData } from "@/lib/types";
 import { Header } from "./Header";
 import { Tabs } from "./Tabs";
 import { StandardTab } from "./StandardTab";
+import { SpecialTab } from "./SpecialTab";
 
 export function DashboardShell({ data, highlight }: { data: DashboardData; highlight?: string }) {
   return (
@@ -21,7 +22,7 @@ export function DashboardShell({ data, highlight }: { data: DashboardData; highl
         <Tabs
           items={[
             { key: "standard", label: "🏆 Standard Awards", content: <StandardTab data={data} highlight={highlight} /> },
-            { key: "special", label: "🏅 Special Awards", content: <div /> },
+            { key: "special", label: "🏅 Special Awards", content: <SpecialTab data={data} /> },
             { key: "detailed", label: "📊 Detailed Standings", content: <div /> },
           ]}
         />
