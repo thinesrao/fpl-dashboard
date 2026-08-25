@@ -17,6 +17,7 @@ from award_calculators import (
     calculate_reversed_motw,
 )
 from penalty_source import fetch_penalty_events, get_supabase_client
+from dashboard_export import build_dashboard_payload, write_dashboard_json
 
 # --- Configuration ---
 # NOTE: before updating the league IDs below, also run scripts/migrate_new_season_sheet.py
@@ -718,6 +719,12 @@ def main():
         set_with_dataframe(worksheet, df, include_index=False)
         print(f"  Successfully wrote to '{name}' worksheet.")
         time.sleep(3)
+
+    # --- Emit the static dashboard.json for the Vercel frontend ---
+    print("Writing dashboard.json...")
+    payload = build_dashboard_payload(worksheets_to_write)
+    write_dashboard_json(payload, "dashboard.json")
+    print("dashboard.json written.")
 
     print("--- Pipeline finished successfully! ---")
 
