@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PepRoulette Dashboard (web)
 
-## Getting Started
+Next.js App Router dashboard for the Pep's Roulette mini-league. This is the
+public read-only dashboard described in Plan 2 of the Streamlit → Vercel
+migration; the data itself is published by the Python pipeline in Plan 1.
 
-First, run the development server:
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Opens on `http://localhost:3000`. With `NEXT_PUBLIC_DASHBOARD_URL` unset,
+the app reads `fixtures/dashboard.sample.json` instead of fetching from
+Blob storage, so local dev works without any live data feed.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tests
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Unit / component tests (Vitest + Testing Library):
 
-## Learn More
+```bash
+npm run test
+```
 
-To learn more about Next.js, take a look at the following resources:
+End-to-end smoke test (Playwright, against the fixture data):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npx playwright install chromium   # first run only
+npm run e2e
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The Playwright config (`playwright.config.ts`) boots `npm run dev` itself
+and reuses an already-running dev server if one is up.
 
-## Deploy on Vercel
+## Production build
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run build
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploying to Vercel
+
+- **Root Directory**: `web/` (this project lives in a subdirectory of the
+  monorepo; set this in the Vercel project settings).
+- **Framework Preset**: Next.js (auto-detected).
+- **Environment variable**: `NEXT_PUBLIC_DASHBOARD_URL` — set this to the
+  Blob URL for `dashboard.json` documented in `docs/INFRA.md`. Without it,
+  the deployed app falls back to the bundled fixture.
+- **Revalidation**: the dashboard page sets `export const revalidate = 300`,
+  so Vercel's ISR re-fetches `dashboard.json` from Blob storage at most
+  every 300 seconds. The underlying data is produced and published by the
+  Python pipeline (Plan 1); this app never writes data, only reads it.
