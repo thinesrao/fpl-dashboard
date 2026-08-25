@@ -2,8 +2,9 @@
 import type { DashboardData } from "@/lib/types";
 import { Header } from "./Header";
 import { Tabs } from "./Tabs";
+import { StandardTab } from "./StandardTab";
 
-export function DashboardShell({ data }: { data: DashboardData }) {
+export function DashboardShell({ data, highlight }: { data: DashboardData; highlight?: string }) {
   return (
     <>
       <Header gameweek={data.meta.lastFinishedGw} lastUpdated={data.meta.lastUpdatedUtc} />
@@ -19,7 +20,7 @@ export function DashboardShell({ data }: { data: DashboardData }) {
         </section>
         <Tabs
           items={[
-            { key: "standard", label: "🏆 Standard Awards", content: <div /> },
+            { key: "standard", label: "🏆 Standard Awards", content: <StandardTab data={data} highlight={highlight} /> },
             { key: "special", label: "🏅 Special Awards", content: <div /> },
             { key: "detailed", label: "📊 Detailed Standings", content: <div /> },
           ]}
