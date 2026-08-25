@@ -39,6 +39,20 @@ jobs:
         run: python3 data_pipeline.py
         env:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Publish dashboard.json to Vercel Blob
+        run: |
+          npm install
+          node scripts/publish_blob.mjs
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
 
   test:
     # Independent of the `build` job: guards the money-affecting scoring math
