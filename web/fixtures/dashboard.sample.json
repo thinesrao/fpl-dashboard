@@ -1,0 +1,18 @@
+{
+  "sheets": {
+    "classic_league_standings": [
+      {"Manager": "Danish Aziz", "Total": 212},
+      {"Manager": "Faiz Rahman", "Total": 199},
+      {"Manager": "Wei Jie", "Total": 191}
+    ],
+    "h2h_league_standings": [
+      {"Manager": "Iqbal Hakim", "Total H2H Point": 15},
+      {"Manager": "Wei Jie", "Total H2H Point": 13}
+    ],
+    "golden_boot": [
+      {"Standings": 1, "Team": "A", "Manager": "Faiz Rahman", "Goals": 7, "GW1": 3, "GW2": 4},
+      {"Standings": 2, "Team": "B", "Manager": "Wei Jie", "Goals": 5, "GW1": 2, "GW2": 3}
+    ]
+  },
+  "generated_from_metadata": { "last_finished_gw": 3, "last_updated_utc": "2026-08-25T10:30:00+00:00" }
+}
