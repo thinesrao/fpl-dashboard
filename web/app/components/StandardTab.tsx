@@ -3,6 +3,7 @@ import type { DashboardData } from "@/lib/types";
 import { getSheet } from "@/lib/types";
 import { topStandings } from "@/lib/transforms";
 import { RaceChart } from "./RaceChart";
+import { MonthlyWeekly } from "./MonthlyWeekly";
 
 export function StandardTab({ data, highlight }: { data: DashboardData; highlight?: string }) {
   const classic = topStandings(getSheet(data, "classic_league_standings"), "Total");
@@ -20,6 +21,7 @@ export function StandardTab({ data, highlight }: { data: DashboardData; highligh
           <p className="font-display text-xl text-[--accent]">{String(cup[0].Winner ?? "")}</p>
         </div>
       )}
+      <MonthlyWeekly data={data} />
     </div>
   );
 }

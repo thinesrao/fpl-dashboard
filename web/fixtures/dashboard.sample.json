@@ -12,7 +12,10 @@
     "golden_boot": [
       {"Standings": 1, "Team": "A", "Manager": "Faiz Rahman", "Goals": 7, "GW1": 3, "GW2": 4},
       {"Standings": 2, "Team": "B", "Manager": "Wei Jie", "Goals": 5, "GW1": 2, "GW2": 3}
-    ]
+    ],
+    "classic_monthly_august": [{"Standings": 1, "Manager": "Danish Aziz", "Points": 250}],
+    "weekly_manager_log": [{"Gameweek": 1, "Winner": "Wei Jie", "Score": 89}],
+    "fpl_challenge_weekly_log": [{"Gameweek": 1, "Winner": "Faiz Rahman", "Score": 42}]
   },
   "generated_from_metadata": { "last_finished_gw": 3, "last_updated_utc": "2026-08-25T10:30:00+00:00" }
 }
