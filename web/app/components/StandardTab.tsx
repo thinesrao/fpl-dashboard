@@ -12,8 +12,12 @@ export function StandardTab({ data, highlight }: { data: DashboardData; highligh
   return (
     <div>
       <div className="grid gap-4 md:grid-cols-2">
-        <RaceChart title="Classic League" caption="Total points" rows={classic} highlight={highlight} />
-        <RaceChart title="Head-to-Head" caption="Total H2H points" rows={h2h} highlight={highlight} />
+        <div className="overflow-x-auto">
+          <RaceChart title="Classic League" caption="Total points" rows={classic} highlight={highlight} />
+        </div>
+        <div className="overflow-x-auto">
+          <RaceChart title="Head-to-Head" caption="Total H2H points" rows={h2h} highlight={highlight} />
+        </div>
       </div>
       {data.meta.lastFinishedGw >= 34 && cup.length > 0 && (
         <div className="mt-4 rounded-2xl border border-[--line] bg-[--panel] p-4">
