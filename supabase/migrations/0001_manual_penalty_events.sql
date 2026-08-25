@@ -5,7 +5,7 @@ create table if not exists public.manual_penalty_events (
   id          uuid primary key default gen_random_uuid(),
   gameweek    integer not null check (gameweek between 1 and 38),
   player_name text    not null,
-  event_type  text    not null check (event_type in ('scored','won','missed','saved')),
+  event_type  text    not null check (event_type in ('Penalty Scored','Penalty Won','Penalty Missed','Penalty Saved')),
   created_at  timestamptz not null default now(),
   created_by  uuid references auth.users (id)
 );

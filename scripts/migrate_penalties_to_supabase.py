@@ -36,9 +36,14 @@ def main():
     rows = rows_from_sheet_records(sheet.get_all_records())
 
     supabase = get_supabase_client()
-    if rows:
-        supabase.table("manual_penalty_events").insert(rows).execute()
-    print(f"Migrated {len(rows)} penalty rows to Supabase.")
+    migrated = 0
+    for row in rows:
+        try:
+            supabase.table("manual_penalty_events").insert(row).execute()
+            migrated += 1
+        except Exception as exc:
+            print(f"Skipping row {row!r}: {exc}")
+    print(f"Migrated {migrated} of {len(rows)} penalty rows to Supabase.")
 
 
 if __name__ == "__main__":
