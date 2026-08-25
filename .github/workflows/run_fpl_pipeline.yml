@@ -49,8 +49,12 @@ jobs:
 
       - name: Publish dashboard.json to Vercel Blob
         run: |
-          npm install
-          node scripts/publish_blob.mjs
+          if [ -f dashboard.json ]; then
+            npm install
+            node scripts/publish_blob.mjs
+          else
+            echo "dashboard.json not produced (pipeline exited early — e.g. no finished gameweek yet); skipping blob publish."
+          fi
         env:
           BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
 

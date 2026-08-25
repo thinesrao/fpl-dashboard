@@ -22,9 +22,9 @@ from dashboard_export import build_dashboard_payload, write_dashboard_json
 # --- Configuration ---
 # NOTE: before updating the league IDs below, also run scripts/migrate_new_season_sheet.py
 # for real and update GOOGLE_SHEET_NAME (this file + app.py) -- see that script's docstring.
-CLASSIC_LEAGUE_ID = 665732       # TODO(2026/27): replace with the new classic league ID once admins confirm (registration due 22 Aug 2026)
-H2H_LEAGUE_ID = 818813           # TODO(2026/27): replace with the new H2H league ID once admins confirm
-FPL_CHALLENGE_LEAGUE_ID = 5008   # TODO(2026/27): replace with the new FPL Challenge league ID once admins confirm
+CLASSIC_LEAGUE_ID = 218144       # 2026/27 PepRoulette™ Classic
+H2H_LEAGUE_ID = 841933           # 2026/27 PepRoulette™ H2H
+FPL_CHALLENGE_LEAGUE_ID = 2924   # 2026/27 PepRoulette™ Challenge
 GOOGLE_SHEET_NAME = "FPL-Data-Pep-2026-27"
 
 # --- API Endpoints ---
@@ -166,7 +166,7 @@ def main():
     print("Fetching ALL H2H matches with pagination...")
     h2h_matches_data = get_all_h2h_matches(H2H_LEAGUE_ID)
     
-    if not all([fpl_data, classic_league_data, h2h_league_data, h2h_matches_data]): print("Failed to fetch base data. Exiting."); return
+    if not all([fpl_data, classic_league_data, h2h_league_data, h2h_matches_data]): print("Failed to fetch base data. Exiting."); raise SystemExit(1)
 
     finished_gws = [gw['id'] for gw in fpl_data['events'] if gw['finished']]
     if not finished_gws: print("No gameweeks have finished yet. Exiting."); return
