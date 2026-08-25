@@ -5,7 +5,7 @@ import { dispatchPipeline } from "@/lib/github";
 export async function POST() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!user || user.is_anonymous) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const token = process.env.GH_DISPATCH_TOKEN;
   if (!token) return NextResponse.json({ error: "not configured" }, { status: 500 });

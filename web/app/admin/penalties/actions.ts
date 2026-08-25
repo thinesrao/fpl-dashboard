@@ -1,8 +1,13 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { addPenaltyEvent, deletePenaltyEvent, penaltyEventSchema } from "@/lib/penalties";
+import { createClient } from "@/lib/supabase/server";
 
 export async function addPenaltyAction(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.is_anonymous) throw new Error("unauthorized");
+
   const parsed = penaltyEventSchema.safeParse({
     gameweek: formData.get("gameweek"),
     player_name: formData.get("player_name"),
@@ -14,6 +19,10 @@ export async function addPenaltyAction(formData: FormData) {
 }
 
 export async function deletePenaltyAction(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.is_anonymous) throw new Error("unauthorized");
+
   const id = String(formData.get("id") ?? "");
   if (!id) throw new Error("Missing id");
   await deletePenaltyEvent(id);

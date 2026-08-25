@@ -20,7 +20,8 @@ export async function listPenaltyEvents(): Promise<PenaltyEvent[]> {
 
 export async function addPenaltyEvent(input: z.infer<typeof penaltyEventSchema>): Promise<void> {
   const supabase = await createClient();
-  const { error } = await supabase.from(TABLE).insert(input);
+  const { data: { user } } = await supabase.auth.getUser();
+  const { error } = await supabase.from(TABLE).insert({ ...input, created_by: user?.id });
   if (error) throw new Error(error.message);
 }
 
