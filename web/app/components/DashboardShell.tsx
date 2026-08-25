@@ -1,12 +1,17 @@
 "use client";
+import { useState } from "react";
 import type { DashboardData } from "@/lib/types";
+import { getSheet } from "@/lib/types";
 import { Header } from "./Header";
 import { Tabs } from "./Tabs";
 import { StandardTab } from "./StandardTab";
 import { SpecialTab } from "./SpecialTab";
 import { DetailedTab } from "./DetailedTab";
+import { ManagerSelect } from "./ManagerSelect";
 
-export function DashboardShell({ data, highlight }: { data: DashboardData; highlight?: string }) {
+export function DashboardShell({ data }: { data: DashboardData }) {
+  const [highlight, setHighlight] = useState("");
+  const managers = getSheet(data, "classic_league_standings").map((r) => String(r.Manager ?? ""));
   return (
     <>
       <Header gameweek={data.meta.lastFinishedGw} lastUpdated={data.meta.lastUpdatedUtc} />
@@ -20,11 +25,12 @@ export function DashboardShell({ data, highlight }: { data: DashboardData; highl
             Awards final to Gameweek {data.meta.lastFinishedGw}
           </p>
         </section>
+        <ManagerSelect managers={managers} value={highlight} onChange={setHighlight} />
         <Tabs
           items={[
-            { key: "standard", label: "🏆 Standard Awards", content: <StandardTab data={data} highlight={highlight} /> },
+            { key: "standard", label: "🏆 Standard Awards", content: <StandardTab data={data} highlight={highlight || undefined} /> },
             { key: "special", label: "🏅 Special Awards", content: <SpecialTab data={data} /> },
-            { key: "detailed", label: "📊 Detailed Standings", content: <DetailedTab data={data} highlight={highlight} /> },
+            { key: "detailed", label: "📊 Detailed Standings", content: <DetailedTab data={data} highlight={highlight || undefined} /> },
           ]}
         />
       </main>
