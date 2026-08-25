@@ -16,16 +16,19 @@
 ## GitHub Actions secrets (Settings → Secrets and variables → Actions)
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `BLOB_READ_WRITE_TOKEN`
 - (existing) `GCP_CREDENTIALS`
-- `GH_DISPATCH_TOKEN` — GitHub PAT (fine-grained, repo `thinesrao/fpl-dashboard`, Actions: Read and write) for the Publish button to trigger `workflow_dispatch`.
 
 ## Plan 3 — Admin + scheduling
 
 ### Supabase Authentication
 - Create a single admin user: **Authentication** → **Users** → **Add user** (email + password).
-- The public Supabase anon key and project URL go in **Vercel** as:
-  - `NEXT_PUBLIC_SUPABASE_URL` (Config type)
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Config type)
-- These enable the frontend admin panel (`/admin/login`) to authenticate against Supabase.
+
+### Vercel environment variables
+- Go to Vercel project Settings → Environment Variables.
+- **Config type** (public, bundled in browser):
+  - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase public anon key
+- **Secret type** (server-only, never `NEXT_PUBLIC_*`):
+  - `GH_DISPATCH_TOKEN` — fine-grained GitHub PAT (repo `thinesrao/fpl-dashboard`, Actions: Read and write), used by the admin Publish button to trigger `workflow_dispatch`
 
 ### GitHub Actions variable (not secret)
 - Settings → **Secrets and variables** → **Actions** → **Variables**

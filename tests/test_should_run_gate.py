@@ -1,3 +1,7 @@
+import os
+import subprocess
+import sys
+
 from scripts.should_run_gate import published_gw_from_dashboard, decide
 
 
@@ -18,3 +22,13 @@ def test_decide_runs_when_new_gw_finalized():
 def test_decide_skips_when_nothing_new():
     events = _events([(1, True, True)])
     assert decide(events, {"generated_from_metadata": {"last_finished_gw": 1}}) is False
+
+
+def test_script_runs_as_the_workflow_invokes_it():
+    result = subprocess.run(
+        [sys.executable, "scripts/should_run_gate.py"],
+        capture_output=True, text=True,
+        env={**os.environ, "DASHBOARD_URL": ""},
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() in ("true", "false")

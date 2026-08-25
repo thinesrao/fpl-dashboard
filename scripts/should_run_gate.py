@@ -5,10 +5,13 @@ Fail-open: any error prints "true" so a transient hiccup never silently
 stalls updates. Manual workflow_dispatch bypasses this gate entirely.
 """
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import requests
 
-from gw_gate import latest_finalized_gw, should_run
+from gw_gate import should_run
 
 BOOTSTRAP_URL = "https://fantasy.premierleague.com/api/bootstrap-static/"
 
