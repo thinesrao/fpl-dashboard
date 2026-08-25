@@ -126,7 +126,7 @@ no award depends on price.
 | `id`        | uuid pk     | default `gen_random_uuid()`                       |
 | `gameweek`  | int         | 1–38                                              |
 | `player_name` | text      | must match FPL naming; UI offers a lookup (§6.3)  |
-| `event_type`| text enum   | `scored` \| `won` \| `missed` \| `saved`          |
+| `event_type`| text enum   | `Penalty Scored` \| `Penalty Won` \| `Penalty Missed` \| `Penalty Saved` — must match the strings `award_calculators.calculate_penalty_score` counts (`"Penalty Scored"`/`"Penalty Won"`); the admin form (§6.3) submits these exact values |
 | `created_at`| timestamptz | default `now()`                                   |
 | `created_by`| uuid        | references `auth.users` (the admin)               |
 
