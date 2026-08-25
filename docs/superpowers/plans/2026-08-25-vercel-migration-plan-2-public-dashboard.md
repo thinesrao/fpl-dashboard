@@ -822,6 +822,150 @@ git commit -m "feat: standard tab with classic and H2H race charts"
 
 ---
 
+### Task 6b: Monthly & Weekly winners section (full Streamlit parity)
+
+**Files:**
+- Create: `web/lib/monthly.ts`, `web/app/components/MonthlyWeekly.tsx`
+- Modify: `web/app/components/StandardTab.tsx` (append the section), `web/fixtures/dashboard.sample.json` (add sample monthly/weekly data)
+- Test: `web/lib/monthly.test.ts`
+
+**Interfaces:**
+- Consumes: `getSheet` (Task 3), `Tabs` (Task 5), `StandingsTable` (Task 8 — if executing in order, Task 8 lands after this; see note below).
+- Produces:
+  - `MONTH_ORDER: string[]` (August→May) and `monthlySheets(data: DashboardData, prefix: string): { label: string; rows: SheetRow[] }[]` — finds sheets whose name starts with `prefix`, sorts latest-month-first by `MONTH_ORDER`, and title-cases the month label.
+  - `<MonthlyWeekly data />` — a bordered card with an inner `Tabs`: Classic Monthly, H2H Monthly, Manager of the Week (`weekly_manager_log`), FPL Challenge (`fpl_challenge_weekly_log`).
+
+> **Ordering note:** this task uses `StandingsTable` from Task 8. If executing strictly in number order, either (a) do Task 8 before this one, or (b) create a minimal local table here and swap to `StandingsTable` when Task 8 lands. Recommended: reorder so Task 8 runs before Task 6b (they're independent otherwise).
+
+- [ ] **Step 1: Write the failing monthly test**
+
+Create `web/lib/monthly.test.ts`:
+
+```typescript
+import { monthlySheets } from "./monthly";
+import type { DashboardData } from "./types";
+
+const data: DashboardData = {
+  sheets: {
+    classic_monthly_august: [{ Standings: 1, Aug: 10 }],
+    classic_monthly_september: [{ Standings: 1, Sep: 12 }],
+  },
+  meta: { lastFinishedGw: 3, lastUpdatedUtc: "" },
+};
+
+test("monthlySheets returns latest month first with title-cased labels", () => {
+  const out = monthlySheets(data, "classic_monthly_");
+  expect(out.map((m) => m.label)).toEqual(["September", "August"]);
+  expect(out[0].rows[0].Sep).toBe(12);
+});
+
+test("monthlySheets returns empty when no matching sheets", () => {
+  expect(monthlySheets(data, "h2h_monthly_")).toEqual([]);
+});
+```
+
+- [ ] **Step 2: Run it — expect FAIL.** Run: `cd web && npx vitest run lib/monthly.test.ts`
+
+- [ ] **Step 3: Implement monthly.ts**
+
+Create `web/lib/monthly.ts`:
+
+```typescript
+import type { DashboardData, SheetRow } from "./types";
+
+export const MONTH_ORDER = [
+  "August", "September", "October", "November", "December",
+  "January", "February", "March", "April", "May",
+];
+
+function titleCase(s: string): string {
+  return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function monthlySheets(data: DashboardData, prefix: string): { label: string; rows: SheetRow[] }[] {
+  return Object.keys(data.sheets)
+    .filter((n) => n.startsWith(prefix))
+    .map((n) => ({ n, month: n.slice(prefix.length) }))
+    .sort((a, b) => MONTH_ORDER.indexOf(b.month) - MONTH_ORDER.indexOf(a.month))
+    .map(({ n, month }) => ({ label: titleCase(month), rows: data.sheets[n] }));
+}
+```
+
+- [ ] **Step 4: Run it — expect PASS.** Run: `cd web && npx vitest run lib/monthly.test.ts`
+
+- [ ] **Step 5: Implement MonthlyWeekly + wire into StandardTab**
+
+Create `web/app/components/MonthlyWeekly.tsx`:
+
+```tsx
+"use client";
+import type { DashboardData } from "@/lib/types";
+import { getSheet } from "@/lib/types";
+import { monthlySheets } from "@/lib/monthly";
+import { Tabs } from "./Tabs";
+import { StandingsTable } from "./StandingsTable";
+
+function Empty() {
+  return <p className="text-sm text-[--muted]">No data yet.</p>;
+}
+
+function MonthlyList({ data, prefix }: { data: DashboardData; prefix: string }) {
+  const months = monthlySheets(data, prefix);
+  if (months.length === 0) return <Empty />;
+  return (
+    <div className="space-y-4">
+      {months.map((m) => (
+        <div key={m.label}>
+          <h5 className="font-display mb-2 text-sm">{m.label}</h5>
+          <StandingsTable rows={m.rows} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function MonthlyWeekly({ data }: { data: DashboardData }) {
+  const weekly = getSheet(data, "weekly_manager_log");
+  const challenge = getSheet(data, "fpl_challenge_weekly_log");
+  return (
+    <div className="mt-4 rounded-2xl border border-[--line] bg-[--panel] p-4">
+      <h4 className="font-display mb-3 text-sm">Monthly &amp; Weekly Winners</h4>
+      <Tabs
+        items={[
+          { key: "cm", label: "Classic Monthly", content: <MonthlyList data={data} prefix="classic_monthly_" /> },
+          { key: "hm", label: "H2H Monthly", content: <MonthlyList data={data} prefix="h2h_monthly_" /> },
+          { key: "motw", label: "Manager of the Week", content: weekly.length ? <StandingsTable rows={weekly} /> : <Empty /> },
+          { key: "chal", label: "FPL Challenge", content: challenge.length ? <StandingsTable rows={challenge} /> : <Empty /> },
+        ]}
+      />
+    </div>
+  );
+}
+```
+
+In `StandardTab.tsx`, import `MonthlyWeekly` and render `<MonthlyWeekly data={data} />` after the cup banner (still inside the outer `<div>`).
+
+- [ ] **Step 6: Extend the fixture**
+
+Add to `web/fixtures/dashboard.sample.json` `"sheets"` (so the section renders in dev/e2e):
+
+```json
+"classic_monthly_august": [{"Standings": 1, "Manager": "Danish Aziz", "Points": 250}],
+"weekly_manager_log": [{"Gameweek": 1, "Winner": "Wei Jie", "Score": 89}],
+"fpl_challenge_weekly_log": [{"Gameweek": 1, "Winner": "Faiz Rahman", "Score": 42}]
+```
+
+- [ ] **Step 7: Verify build.** Run: `cd web && npm run build`
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add web/lib/monthly.ts web/lib/monthly.test.ts web/app/components/MonthlyWeekly.tsx web/app/components/StandardTab.tsx web/fixtures/dashboard.sample.json
+git commit -m "feat: monthly and weekly winners section for full Streamlit parity"
+```
+
+---
+
 ### Task 7: Special tab — award leader cards
 
 **Files:**
@@ -1280,10 +1424,10 @@ git commit -m "test: playwright smoke test and web README/deploy notes"
 - Recharts for bar + line charts (§6.1) → Tasks 6, 8. ✓
 - Deployed to Vercel, Root Directory `web/` (§12 repo layout) → Tasks 1, 10 deploy notes. ✓
 - Testing: logic TDD + component tests + Playwright smoke (§7 scope for this plane) → Tasks 3, 4, 6–10. ✓
-- Out of scope (later plans): live overlay (§7 → Plan 4), admin/auth/Publish (§6.3 admin, §9 → Plan 3), monthly/weekly & FPL Challenge sub-tabs are **not** included here — see gap note.
+- Monthly & Weekly winners section (`classic_monthly_*`, `h2h_monthly_*`, `weekly_manager_log`, `fpl_challenge_weekly_log`) for full Streamlit parity → Task 6b. ✓
+- Out of scope (later plans): live overlay (§7 → Plan 4), admin/auth/Publish (§6.3 admin, §9 → Plan 3).
 
-**Gap note (intentional deferrals, not omissions):**
-- The current app's "Monthly & Weekly Winners" sub-tabs (`classic_monthly_*`, `h2h_monthly_*`, `weekly_manager_log`, `fpl_challenge_weekly_log`) are **not** rendered in this plan to keep it focused on the core three tabs. They are a small follow-up (a sub-tab component over the monthly/weekly sheets). Tracked here so it isn't mistaken for complete parity. If full parity is required before launch, add a Task 6b rendering those sheets as tables — the data is already in `dashboard.json`.
+**Execution ordering:** run Task 8 before Task 6b (Task 6b reuses `StandingsTable` from Task 8; they are otherwise independent).
 
 **Placeholder scan:** No "TBD"/"handle edge cases"/"similar to Task N" — every code step has real code. `SPECIAL_AWARDS` is written out in full in Task 7.
 
