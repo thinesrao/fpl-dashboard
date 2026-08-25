@@ -16,6 +16,8 @@ from award_calculators import (
     calculate_bad_luck_h2h,
     calculate_reversed_motw,
 )
+from penalty_source import fetch_penalty_events, get_supabase_client
+from dashboard_export import build_dashboard_payload, write_dashboard_json
 
 # --- Configuration ---
 # NOTE: before updating the league IDs below, also run scripts/migrate_new_season_sheet.py
@@ -188,17 +190,21 @@ def main():
     manager_transfers = {row['manager_id']: get_json_from_url(ENTRY_TRANSFERS_URL.format(TID=row['manager_id'])) for _, row in manager_df.iterrows()}
     player_details_dict = {pid: get_json_from_url(ELEMENT_SUMMARY_URL.format(EID=pid)) for pid in elements_df['id']}
 
-    # --- Read the manual penalty data and create player name map ---
-    print("Fetching manual penalty data...")
+    # --- Read the manual penalty data from Supabase and create player name map ---
+    print("Fetching manual penalty data from Supabase...")
     try:
-        manual_penalty_sheet = spreadsheet.worksheet('manual_penalty_data')
-        manual_penalty_df = pd.DataFrame(manual_penalty_sheet.get_all_records())
+        supabase_client = get_supabase_client()
+        manual_penalty_df = fetch_penalty_events(supabase_client)
         if not manual_penalty_df.empty:
-            # Ensure Gameweek column is numeric for safe comparison
-            manual_penalty_df['Gameweek'] = pd.to_numeric(manual_penalty_df['Gameweek'], errors='coerce').dropna()
-    except gspread.WorksheetNotFound:
-        print("Warning: 'manual_penalty_data' sheet not found. Penalty King award will be zero.")
-        manual_penalty_df = pd.DataFrame(columns=['Gameweek', 'Player_Name', 'Event_Type'])
+            manual_penalty_df['Gameweek'] = pd.to_numeric(
+                manual_penalty_df['Gameweek'], errors='coerce'
+            ).dropna()
+    except Exception as e:
+        print(f"Warning: could not load penalty events from Supabase ({e}). "
+              f"Penalty King award will be zero.")
+        manual_penalty_df = pd.DataFrame(
+            columns=['Gameweek', 'Player_Name', 'Event_Type']
+        )
 
     # --- Create player name mapping with team names for duplicates ---
     # Add team name to each player
@@ -713,6 +719,12 @@ def main():
         set_with_dataframe(worksheet, df, include_index=False)
         print(f"  Successfully wrote to '{name}' worksheet.")
         time.sleep(3)
+
+    # --- Emit the static dashboard.json for the Vercel frontend ---
+    print("Writing dashboard.json...")
+    payload = build_dashboard_payload(worksheets_to_write)
+    write_dashboard_json(payload, "dashboard.json")
+    print("dashboard.json written.")
 
     print("--- Pipeline finished successfully! ---")
 

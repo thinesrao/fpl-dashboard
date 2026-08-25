@@ -12,6 +12,22 @@ __pycache__/
 # macOS system files
 .DS_Store
 
+# Visual brainstorming companion mockups
+.superpowers/
+
+# Node.js / npm
+node_modules/
+package-lock.json
+
+# Next.js / Vercel frontend
+web/node_modules/
+web/.next/
+web/.vercel/
+web/.env*.local
+
 # Documentation / Large files
 *.pdf
 # *.md  # Allow README.md and other documentation
+
+# Build artifacts
+dashboard.json
