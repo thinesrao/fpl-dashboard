@@ -28,3 +28,6 @@ web/.env*.local
 # Documentation / Large files
 *.pdf
 # *.md  # Allow README.md and other documentation
+
+# Build artifacts
+dashboard.json
