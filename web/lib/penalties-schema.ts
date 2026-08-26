@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const PENALTY_TYPES = ["Penalty Scored", "Penalty Won", "Penalty Missed", "Penalty Saved"] as const;
+export const PENALTY_TYPES = ["Penalty Scored", "Penalty Won"] as const;
 export type PenaltyType = (typeof PENALTY_TYPES)[number];
 
 export const penaltyEventSchema = z.object({

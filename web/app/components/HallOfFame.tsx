@@ -48,7 +48,7 @@ function monthlyCards(data: DashboardData, prefix: string, tag: string): HofCard
 
 function HofCardView({ card }: { card: HofCard }) {
   return (
-    <div className="flex min-w-[150px] shrink-0 flex-col justify-between rounded-2xl border border-[--line] bg-[--panel] px-3.5 py-3">
+    <div className="flex flex-col justify-between rounded-2xl border border-[--line] bg-[--panel] px-3.5 py-3">
       <div className="font-display text-xs text-[--muted]">{card.label}</div>
       <div className="mt-1 truncate text-sm font-bold text-[--ink]">{card.winner}</div>
       <div className="font-display mt-0.5 text-lg text-[--lime]">{card.score || "soon"}</div>
@@ -58,7 +58,7 @@ function HofCardView({ card }: { card: HofCard }) {
 
 function HofPlaceholder() {
   return (
-    <div className="flex min-w-[150px] shrink-0 flex-col justify-between rounded-2xl border border-[--line] bg-[--panel] px-3.5 py-3">
+    <div className="flex flex-col justify-between rounded-2xl border border-[--line] bg-[--panel] px-3.5 py-3">
       <div className="font-display text-xs text-[--muted]">Hall of Fame</div>
       <div className="mt-1 text-sm font-bold text-[--ink]">—</div>
       <div className="font-display mt-0.5 text-lg text-[--lime]">soon</div>
@@ -79,7 +79,7 @@ export function HallOfFame({ data }: { data: DashboardData }) {
       <h2 className="font-display mb-4 text-[13px] uppercase tracking-[0.2em] text-[--muted]">
         Hall of Fame
       </h2>
-      <div className="flex gap-2.5 overflow-x-auto pb-1.5">
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
         {cards.length === 0 ? (
           <HofPlaceholder />
         ) : (
