@@ -70,3 +70,20 @@ pipeline reruns.
 ### Setup
 Set up Supabase authentication (create the admin user in Supabase) and the
 GitHub PAT (for "Publish now") as documented in `docs/INFRA.md` (Plan 3 section).
+
+## Live scores (Plan 4)
+
+Live-score leaderboard overlay showing gameweek standings updated in real-time
+during match windows.
+
+### How it works
+- The `/api/live` route computes the current-gameweek live leaderboard and
+  caches the result for 60 seconds.
+- The `LiveSection` component polls the route every 60 seconds and only displays
+  the overlay during active match windows (when `isGameweekLive` is true).
+- The `NEXT_PUBLIC_CLASSIC_LEAGUE_ID` environment variable selects which league
+  to display (optional; defaults to the PepRoulette Classic id if unset).
+
+### Environment setup
+- `NEXT_PUBLIC_CLASSIC_LEAGUE_ID` — Classic league ID (optional; defaults to
+  218144). No deploy-time secret is required; this is a public identifier.
