@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Archivo_Black } from "next/font/google";
+import { Anton, Inter, Fredoka } from "next/font/google";
 import "./globals.css";
 
+const anton = Anton({ subsets: ["latin"], weight: "400", variable: "--font-anton" });
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const archivo = Archivo_Black({ subsets: ["latin"], weight: "400", variable: "--font-archivo" });
+const fredoka = Fredoka({ subsets: ["latin"], weight: "600", variable: "--font-fredoka" });
 
 export const metadata: Metadata = {
   title: "PepRoulette FPL",
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${archivo.variable}`}>
+    <html lang="en" className={`${anton.variable} ${inter.variable} ${fredoka.variable}`}>
       <body>{children}</body>
     </html>
   );
