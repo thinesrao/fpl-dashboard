@@ -26,7 +26,7 @@ export function DashboardShell({ data }: { data: DashboardData }) {
             Awards final to Gameweek {data.meta.lastFinishedGw}
           </p>
         </section>
-        <LiveSection />
+        <LiveSection highlight={highlight || undefined} />
         <ManagerSelect managers={managers} value={highlight} onChange={setHighlight} />
         <Tabs
           items={[
