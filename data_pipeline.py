@@ -18,6 +18,7 @@ from award_calculators import (
 )
 from penalty_source import fetch_penalty_events, get_supabase_client
 from dashboard_export import build_dashboard_payload, write_dashboard_json
+from retry_util import retry_transient
 
 # --- Configuration ---
 # NOTE: before updating the league IDs below, also run scripts/migrate_new_season_sheet.py
@@ -711,12 +712,17 @@ def main():
 
     print("Writing all processed data to Google Sheets...")
     for name, df in worksheets_to_write.items():
-        try:
-            worksheet = spreadsheet.worksheet(name)
-            worksheet.clear()
-        except gspread.WorksheetNotFound:
-            worksheet = spreadsheet.add_worksheet(title=name, rows=len(df) + 1, cols=len(df.columns) + 1)
-        set_with_dataframe(worksheet, df, include_index=False)
+        def _write_sheet(name=name, df=df):
+            try:
+                worksheet = spreadsheet.worksheet(name)
+                worksheet.clear()
+            except gspread.WorksheetNotFound:
+                worksheet = spreadsheet.add_worksheet(title=name, rows=len(df) + 1, cols=len(df.columns) + 1)
+            set_with_dataframe(worksheet, df, include_index=False)
+
+        # Retry transient Sheets API errors (429/5xx) so a momentary Google
+        # hiccup doesn't fail the whole run.
+        retry_transient(_write_sheet)
         print(f"  Successfully wrote to '{name}' worksheet.")
         time.sleep(3)
 
