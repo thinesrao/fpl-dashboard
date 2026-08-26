@@ -1,9 +1,9 @@
 "use client";
 import type { DashboardData, SheetRow } from "@/lib/types";
 import { getSheet } from "@/lib/types";
-import { monthlySheets } from "@/lib/monthly";
+import { monthlySheets, isMonthComplete } from "@/lib/monthly";
 
-type HofCard = { key: string; label: string; winner: string; score: string };
+type HofCard = { key: string; label: string; winner: string; score: string; provisional?: boolean };
 
 function managerOf(row: SheetRow): string {
   const v = row.Manager;
@@ -32,6 +32,7 @@ function weeklyLogCards(rows: SheetRow[], labelFor: (row: SheetRow) => string): 
  * when we trusted the winner. Anything else falls back to a dash + "see
  * table" rather than guessing. */
 function monthlyCards(data: DashboardData, prefix: string, tag: string): HofCard[] {
+  const lastFinishedGw = data.meta.lastFinishedGw;
   return monthlySheets(data, prefix).map((m) => {
     const row0 = m.rows[0];
     const manager = row0 ? managerOf(row0) : "";
@@ -42,6 +43,7 @@ function monthlyCards(data: DashboardData, prefix: string, tag: string): HofCard
       label: `${m.label} (${tag})`,
       winner: confident ? manager : "—",
       score: confident && scoreKey ? String(row0?.[scoreKey] ?? "") : "see table",
+      provisional: !isMonthComplete(m.label, lastFinishedGw),
     };
   });
 }
@@ -49,8 +51,18 @@ function monthlyCards(data: DashboardData, prefix: string, tag: string): HofCard
 function HofCardView({ card }: { card: HofCard }) {
   return (
     <div className="flex flex-col justify-between rounded-2xl border border-[--line] bg-[--panel] px-3.5 py-3">
-      <div className="font-display text-xs text-[--muted]">{card.label}</div>
-      <div className="mt-1 truncate text-sm font-bold text-[--ink]">{card.winner}</div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-display text-xs text-[--muted]">{card.label}</span>
+        {card.provisional && (
+          <span className="rounded-full border border-[rgba(255,210,63,0.4)] bg-[rgba(255,210,63,0.12)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[--gold]">
+            So far
+          </span>
+        )}
+      </div>
+      {card.provisional && (
+        <div className="mt-1 text-[10px] uppercase tracking-wide text-[--muted]">Leading</div>
+      )}
+      <div className={(card.provisional ? "mt-0.5" : "mt-1") + " truncate text-sm font-bold text-[--ink]"}>{card.winner}</div>
       <div className="font-display mt-0.5 text-lg text-[--lime]">{card.score || "soon"}</div>
     </div>
   );
