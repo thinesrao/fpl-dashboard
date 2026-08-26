@@ -13,5 +13,5 @@ test("penaltyEventSchema rejects bad gameweek and unknown event_type", () => {
 });
 
 test("PENALTY_TYPES matches the pipeline vocabulary", () => {
-  expect(PENALTY_TYPES).toEqual(["Penalty Scored", "Penalty Won", "Penalty Missed", "Penalty Saved"]);
+  expect(PENALTY_TYPES).toEqual(["Penalty Scored", "Penalty Won"]);
 });
