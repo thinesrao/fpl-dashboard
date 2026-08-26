@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Four Vibes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&family=Fredoka:wght@500;600;700&family=Playfair+Display:ital,wght@0,600;0,800;1,600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,sans-serif;background:#000}
+  .band{padding:30px 0}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+  .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:5px 11px;border-radius:999px;margin-bottom:16px}
+  .sw{display:flex;gap:8px;margin-top:18px;align-items:center}
+  .sw i{width:26px;height:26px;border-radius:7px;display:block;border:1px solid rgba(255,255,255,.12)}
+  .sw b{font-size:11px;font-weight:700;opacity:.6;margin-right:4px;letter-spacing:.05em}
+  .note{font-size:12.5px;opacity:.65;margin-top:10px;line-height:1.5}
+
+  /* ============ 1 · HYPE / BANTER ============ */
+  .hype{background:#0a0a0f;color:#fff}
+  .hype .tag{background:#ff2e93;color:#fff}
+  .hype .kick{font-family:Anton;font-size:14px;letter-spacing:.22em;color:#c6ff00}
+  .hype h1{font-family:Anton;font-size:64px;line-height:.92;text-transform:uppercase;margin:6px 0 2px}
+  .hype h1 .pink{color:#ff2e93}
+  .hype .sub{font-family:Anton;font-size:22px;color:#c6ff00;letter-spacing:.02em}
+  .hype .callouts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0}
+  .hype .call{border:2px solid #211d2b;border-radius:14px;padding:14px 16px;background:#15131f}
+  .hype .call .l{font-family:Anton;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+  .hype .call.hot .l{color:#c6ff00}.hype .call.spoon .l{color:#ff2e93}
+  .hype .call .v{font-weight:800;font-size:18px;margin-top:4px}
+  .hype .race{margin-top:8px}
+  .hype .row{display:grid;grid-template-columns:26px 1fr 46px;align-items:center;gap:10px;margin:9px 0}
+  .hype .row .n{font-family:Anton;font-size:18px;color:#3a3550}
+  .hype .row .bar{height:26px;background:#15131f;border-radius:8px;overflow:hidden}
+  .hype .row .fill{height:100%;background:linear-gradient(90deg,#ff2e93,#c6ff00)}
+  .hype .row .p{font-family:Anton;font-size:16px;text-align:right}
+  .hype .row .who{position:absolute;padding-left:10px;font-weight:800;font-size:13px;line-height:26px}
+  .hype .barwrap{position:relative}
+
+  /* ============ 2 · BROADCAST / PREMIUM ============ */
+  .bc{background:linear-gradient(180deg,#0d1526,#0b1220);color:#eaf2ff}
+  .bc .tag{background:rgba(56,189,248,.14);color:#7dd3fc;border:1px solid rgba(56,189,248,.3)}
+  .bc .kick{font-family:Manrope;font-weight:800;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#7dd3fc}
+  .bc h1{font-family:Manrope;font-weight:800;font-size:40px;letter-spacing:-.02em;margin:10px 0 2px}
+  .bc .hero{border:1px solid #1d2740;border-radius:20px;padding:24px;background:radial-gradient(600px 200px at 12% 0%,rgba(56,189,248,.12),transparent 60%),#111a2b;margin:8px 0 18px;display:flex;align-items:center;justify-content:space-between}
+  .bc .hero .big{font-family:Manrope;font-weight:800;font-size:44px}
+  .bc .hero .lab{font-size:12px;color:#8aa0c6;text-transform:uppercase;letter-spacing:.1em}
+  .bc .hero .pts{font-family:Manrope;font-weight:800;font-size:40px;color:#7dd3fc}
+  .bc .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+  .bc .tile{border:1px solid #1d2740;border-radius:16px;padding:16px 18px;background:#111a2b}
+  .bc .tile .k{font-size:11.5px;color:#8aa0c6;text-transform:uppercase;letter-spacing:.08em}
+  .bc .tile .v{font-family:Manrope;font-weight:800;font-size:18px;margin-top:8px}
+  .bc .tile .g{color:#f5c451}
+  .bc .list .li{display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:1px solid #17223a}
+  .bc .list .li .rk{color:#8aa0c6;width:26px;font-weight:700}
+  .bc .list .li .p{font-family:Manrope;font-weight:800}
+
+  /* ============ 3 · ARCADE / COLLECTIBLE ============ */
+  .arc{background:radial-gradient(700px 400px at 80% -5%,rgba(155,92,255,.18),transparent 55%),#12101c;color:#fff}
+  .arc .tag{background:linear-gradient(90deg,#ff5d8f,#9b5cff);color:#fff}
+  .arc .kick{font-family:Fredoka;font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#4ad9ff}
+  .arc h1{font-family:Fredoka;font-weight:700;font-size:38px;margin:8px 0 16px}
+  .arc .cab{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  .arc .badge{border-radius:18px;padding:16px 12px;text-align:center;position:relative;background:#1c1830;border:1px solid #2a2440}
+  .arc .badge .coin{width:52px;height:52px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:24px}
+  .arc .badge .t{font-family:Fredoka;font-weight:600;font-size:12px;opacity:.8}
+  .arc .badge .w{font-weight:700;font-size:13px;margin-top:3px}
+  .arc .c-gold .coin{background:radial-gradient(circle at 35% 30%,#ffe89a,#ffd23f);box-shadow:0 0 22px rgba(255,210,63,.5)}
+  .arc .c-pink .coin{background:radial-gradient(circle at 35% 30%,#ffa6c4,#ff5d8f);box-shadow:0 0 22px rgba(255,93,143,.5)}
+  .arc .c-cyan .coin{background:radial-gradient(circle at 35% 30%,#a6f0ff,#4ad9ff);box-shadow:0 0 22px rgba(74,217,255,.5)}
+  .arc .c-purple .coin{background:radial-gradient(circle at 35% 30%,#cbb0ff,#9b5cff);box-shadow:0 0 22px rgba(155,92,255,.5)}
+  .arc .pcard{border-radius:18px;padding:18px;background:linear-gradient(135deg,#241d3d,#1a1530);border:1px solid #34294f;display:flex;align-items:center;gap:16px}
+  .arc .pcard .av{width:56px;height:56px;border-radius:16px;background:conic-gradient(from 200deg,#ff5d8f,#9b5cff,#4ad9ff,#ffd23f,#ff5d8f)}
+  .arc .pcard .nm{font-family:Fredoka;font-weight:700;font-size:20px}
+  .arc .pcard .lvl{font-size:12px;color:#4ad9ff;margin-top:2px}
+  .arc .xp{height:9px;background:#0f0b1a;border-radius:99px;margin-top:8px;overflow:hidden}
+  .arc .xp i{display:block;height:100%;width:78%;background:linear-gradient(90deg,#4ad9ff,#9b5cff,#ff5d8f)}
+
+  /* ============ 4 · EDITORIAL / SEASON-STORY ============ */
+  .ed{background:#f7f4ee;color:#1a1a1a}
+  .ed .tag{background:#1a1a1a;color:#f7f4ee}
+  .ed .mast{border-bottom:3px solid #1a1a1a;padding-bottom:10px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:baseline}
+  .ed .mast .name{font-family:'Playfair Display';font-weight:800;font-size:34px;letter-spacing:-.01em}
+  .ed .mast .ed2{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:#8a1a1a}
+  .ed .feat{display:grid;grid-template-columns:1.4fr 1fr;gap:26px;align-items:start}
+  .ed h1{font-family:'Playfair Display';font-weight:800;font-size:40px;line-height:1.06;margin-bottom:10px}
+  .ed .lede{font-size:15px;line-height:1.6;color:#333}
+  .ed .lede b{color:#c8102e}
+  .ed .quote{font-family:'Playfair Display';font-style:italic;font-size:19px;line-height:1.4;border-left:3px solid #c8102e;padding-left:14px;margin:16px 0;color:#1a1a1a}
+  .ed .table{border-top:2px solid #1a1a1a}
+  .ed .table .r{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #ddd6c9;font-size:14px}
+  .ed .table .r .rk{font-family:'Playfair Display';font-weight:800;width:26px}
+  .ed .table .r .p{font-weight:700}
+  .ed .table h4{font-family:'Playfair Display';font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+
+  /* picker */
+  .picker{background:#000;padding:34px 0;color:#fff}
+  .pq{font-family:'Archivo Black';font-size:17px;margin-bottom:4px}
+  .picks{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+  .pick{border:1.5px solid #2a2a33;background:#131318;border-radius:14px;padding:15px;cursor:pointer;transition:.15s}
+  .pick:hover{border-color:#888}
+  .pick.selected{border-color:#c6ff00;box-shadow:0 0 0 3px rgba(198,255,0,.18)}
+  .pick .lt{font-family:'Archivo Black';font-size:12px}
+  .pick h4{font-size:15px;margin:6px 0 5px}
+  .pick p{font-size:12px;color:#9aa;line-height:1.45}
+  @media(max-width:820px){.hype h1{font-size:42px}.hype .callouts,.bc .tiles,.arc .cab{grid-template-columns:1fr 1fr}.ed .feat{grid-template-columns:1fr}.picks{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- =================== 1 · HYPE / BANTER =================== -->
+<div class="band hype"><div class="wrap">
+  <span class="tag">Vibe 1</span>
+  <div class="kick">GAMEWEEK 1 · THE VERDICT</div>
+  <h1>MATTHEW MOHAN<br><span class="pink">RUNS IT.</span></h1>
+  <div class="sub">85 PTS — MANAGER OF THE WEEK 👑</div>
+  <div class="callouts">
+    <div class="call hot"><div class="l">🔥 On the charge</div><div class="v">arai oh arai ▲6 spots</div></div>
+    <div class="call spoon"><div class="l">🥄 Spoon watch</div><div class="v">Adam Lee — bottom, again</div></div>
+  </div>
+  <div class="race">
+    <div class="row"><div class="n">1</div><div class="bar barwrap"><div class="fill" style="width:100%"></div><div class="who">Matthew Mohan</div></div><div class="p">85</div></div>
+    <div class="row"><div class="n">2</div><div class="bar barwrap"><div class="fill" style="width:89%"></div><div class="who">arai oh arai</div></div><div class="p">76</div></div>
+    <div class="row"><div class="n">3</div><div class="bar barwrap"><div class="fill" style="width:87%"></div><div class="who">Jordan Rapain</div></div><div class="p">74</div></div>
+  </div>
+  <div class="sw"><b>PALETTE</b><i style="background:#0a0a0f"></i><i style="background:#15131f"></i><i style="background:#ff2e93"></i><i style="background:#c6ff00"></i></div>
+  <div class="note"><b>Hype / Banter</b> — Anton condensed caps, hot-pink + lime, big verdicts, hero/villain callouts. Reads like the group chat gone pro. Loudest, most fun; less "data terminal".</div>
+</div></div>
+
+<!-- =================== 2 · BROADCAST / PREMIUM =================== -->
+<div class="band bc"><div class="wrap">
+  <span class="tag">Vibe 2</span>
+  <div class="kick">League Report · Gameweek 1</div>
+  <h1>The race takes shape</h1>
+  <div class="hero">
+    <div><div class="lab">Manager of the Week</div><div class="big">Matthew Mohan</div></div>
+    <div style="text-align:right"><div class="lab">Points</div><div class="pts">85</div></div>
+  </div>
+  <div class="tiles">
+    <div class="tile"><div class="k">League Leader</div><div class="v">Matthew Mohan · 85</div></div>
+    <div class="tile"><div class="k">Biggest Riser</div><div class="v">arai oh arai ▲6</div></div>
+    <div class="tile"><div class="k">🏆 Golden Boot</div><div class="v g">Faiz — 7 goals</div></div>
+  </div>
+  <div class="list">
+    <div class="li"><span><span class="rk">1</span> Matthew Mohan</span><span class="p">85</span></div>
+    <div class="li"><span><span class="rk">2</span> arai oh arai</span><span class="p">76</span></div>
+    <div class="li"><span><span class="rk">3</span> Jordan Rapain</span><span class="p">74</span></div>
+  </div>
+  <div class="sw"><b>PALETTE</b><i style="background:#0b1220"></i><i style="background:#111a2b"></i><i style="background:#38bdf8"></i><i style="background:#f5c451"></i></div>
+  <div class="note"><b>Broadcast / Premium</b> — Manrope, deep navy, one confident sky-blue accent + gold for trophies, cinematic hero, clean stat tiles. Feels like a proper sports product; elegant and data-rich without shouting.</div>
+</div></div>
+
+<!-- =================== 3 · ARCADE / COLLECTIBLE =================== -->
+<div class="band arc"><div class="wrap">
+  <span class="tag">Vibe 3</span>
+  <div class="kick">Trophy Cabinet · Season 26/27</div>
+  <h1>Collect them all 🏆</h1>
+  <div class="cab">
+    <div class="badge c-gold"><div class="coin">🥇</div><div class="t">Golden Boot</div><div class="w">Faiz · 7</div></div>
+    <div class="badge c-pink"><div class="coin">🅰️</div><div class="t">Playmaker</div><div class="w">Suria · 6</div></div>
+    <div class="badge c-cyan"><div class="coin">🧤</div><div class="t">Golden Glove</div><div class="w">Wei Jie · 4</div></div>
+    <div class="badge c-purple"><div class="coin">🚀</div><div class="t">Highest GW</div><div class="w">Mohan · 85</div></div>
+  </div>
+  <div class="pcard">
+    <div class="av"></div>
+    <div style="flex:1">
+      <div class="nm">Matthew Mohan</div>
+      <div class="lvl">Rank 1 · 2 trophies · on a 1-week heater</div>
+      <div class="xp"><i></i></div>
+    </div>
+    <div style="font-family:Fredoka;font-weight:700;font-size:26px">85</div>
+  </div>
+  <div class="sw"><b>PALETTE</b><i style="background:#12101c"></i><i style="background:#ffd23f"></i><i style="background:#ff5d8f"></i><i style="background:#4ad9ff"></i><i style="background:#9b5cff"></i></div>
+  <div class="note"><b>Arcade / Collectible</b> — Fredoka rounded, glowing trophy "coins", manager cards with XP bars & achievements. Leans hardest into the trophy-cabinet idea; brightest and most game-like. Great for engagement, boldest departure.</div>
+</div></div>
+
+<!-- =================== 4 · EDITORIAL / SEASON-STORY =================== -->
+<div class="band ed"><div class="wrap">
+  <span class="tag">Vibe 4</span>
+  <div class="mast"><div class="name">The PepRoulette Post</div><div class="ed2">Gameweek 1 Edition</div></div>
+  <div class="feat">
+    <div>
+      <h1>Mohan sets the pace as the season roars into life</h1>
+      <p class="lede">An <b>85-point</b> opener hands Matthew Mohan the first Manager of the Week crown, while <b>arai oh arai</b> announces themselves with a six-place surge. At the foot of the table, familiar faces begin their long acquaintance with the wooden spoon.</p>
+      <div class="quote">"One week means nothing — but try telling that to the group chat."</div>
+    </div>
+    <div class="table">
+      <h4>Classic League · GW1</h4>
+      <div class="r"><span><span class="rk">1</span> Matthew Mohan</span><span class="p">85</span></div>
+      <div class="r"><span><span class="rk">2</span> arai oh arai</span><span class="p">76</span></div>
+      <div class="r"><span><span class="rk">3</span> Jordan Rapain</span><span class="p">74</span></div>
+      <div class="r"><span><span class="rk">4</span> Adam Lee</span><span class="p">70</span></div>
+    </div>
+  </div>
+  <div class="sw" style="color:#1a1a1a"><b style="opacity:.5">PALETTE</b><i style="background:#f7f4ee"></i><i style="background:#1a1a1a"></i><i style="background:#c8102e"></i><i style="background:#0f5132"></i></div>
+  <div class="note" style="color:#555"><b>Editorial / Season-story</b> — Playfair serif headlines, warm paper (the only light option), a "league newspaper" that writes the season as it unfolds: featured spotlights, pull-quotes, a timeline. Calmest and most "informative"; most novel positioning, needs the most generated copy.</div>
+</div></div>
+
+<!-- =================== PICKER =================== -->
+<div class="picker"><div class="wrap">
+  <div class="pq">Which personality should we build the redesign around?</div>
+  <p style="color:#9aa;font-size:13px">Same data, four feels. Pick one (or mix — e.g. "Broadcast layout but Arcade trophy cabinet"). Click, or tell me in the terminal.</p>
+  <div class="picks">
+    <div class="pick" onclick="toggleSelect(this)"><div class="lt" style="color:#ff2e93">Vibe 1</div><h4>Hype / Banter</h4><p>Loud, condensed caps, pink+lime, verdicts & callouts.</p></div>
+    <div class="pick" onclick="toggleSelect(this)"><div class="lt" style="color:#38bdf8">Vibe 2</div><h4>Broadcast / Premium</h4><p>Navy, sky+gold, cinematic, clean stat tiles. Sports-product polish.</p></div>
+    <div class="pick" onclick="toggleSelect(this)"><div class="lt" style="color:#9b5cff">Vibe 3</div><h4>Arcade / Collectible</h4><p>Glowing trophy coins, XP cards, brightest & most game-like.</p></div>
+    <div class="pick" onclick="toggleSelect(this)"><div class="lt" style="color:#c8102e">Vibe 4</div><h4>Editorial / Story</h4><p>Serif, warm paper, a "league newspaper" that narrates the season.</p></div>
+  </div>
+</div></div>
+
+</body>
+</html>
