@@ -27,6 +27,23 @@ test("renders the GW1 Manager of the Week card and a monthly card", () => {
   expect(screen.getByText("August (Classic)")).toBeInTheDocument();
 });
 
+test("marks a still-running month as provisional (So far / Leading)", () => {
+  // August ends at GW3; lastFinishedGw 1 means it's still in progress.
+  render(<HallOfFame data={data} />);
+  expect(screen.getByText("So far")).toBeInTheDocument();
+  expect(screen.getByText("Leading")).toBeInTheDocument();
+});
+
+test("does not mark a completed month as provisional", () => {
+  const finished: DashboardData = {
+    ...data,
+    meta: { lastFinishedGw: 3, lastUpdatedUtc: "" },
+  };
+  render(<HallOfFame data={finished} />);
+  expect(screen.queryByText("So far")).not.toBeInTheDocument();
+  expect(screen.queryByText("Leading")).not.toBeInTheDocument();
+});
+
 test("renders a soon placeholder card and does not crash on empty data", () => {
   const empty: DashboardData = { sheets: {}, meta: { lastFinishedGw: 0, lastUpdatedUtc: "" } };
   render(<HallOfFame data={empty} />);
