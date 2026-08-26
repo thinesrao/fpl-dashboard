@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 function formatUpdated(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -23,6 +25,9 @@ export function Header({ gameweek, lastUpdated }: { gameweek: number; lastUpdate
         <div className="text-xs text-[--muted]">
           <b className="text-[--ink]">Gameweek {gameweek}</b> · updated {formatUpdated(lastUpdated)} (UTC)
         </div>
+        <Link href="/admin/login" className="ml-4 text-xs text-[--muted] hover:text-[--accent]">
+          Admin
+        </Link>
       </div>
     </header>
   );

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
 
@@ -8,12 +9,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div>
       <header className="border-b border-[--line]">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-5">
-          <span className="font-display">PepRoulette™ Admin</span>
-          {user && (
-            <form action={signOut}>
-              <button className="text-sm text-[--muted] hover:text-[--ink]">Sign out</button>
-            </form>
-          )}
+          <Link href="/" className="font-display hover:text-[--accent]">PepRoulette™ Admin</Link>
+          <div className="flex items-center gap-4">
+            <Link href="/" className="text-sm text-[--muted] hover:text-[--ink]">← Dashboard</Link>
+            {user && (
+              <form action={signOut}>
+                <button className="text-sm text-[--muted] hover:text-[--ink]">Sign out</button>
+              </form>
+            )}
+          </div>
         </div>
       </header>
       {children}

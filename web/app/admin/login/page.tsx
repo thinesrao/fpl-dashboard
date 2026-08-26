@@ -1,9 +1,15 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { signIn } from "../actions";
 
 export default async function LoginPage({
   searchParams,
 }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user && !user.is_anonymous) redirect("/admin/penalties");
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-5">
       <h1 className="font-display mb-6 text-2xl">Admin sign in</h1>
