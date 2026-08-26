@@ -7,6 +7,18 @@ test("isGameweekLive: true when a fixture started and not all finished", () => {
   expect(isGameweekLive([])).toBe(false);
 });
 
+test("isGameweekLive: postponed fixture does not keep it live", () => {
+  expect(isGameweekLive([
+    { started: true, finished_provisional: true },   // played + done
+    { started: false, finished_provisional: false },  // postponed / not started
+  ])).toBe(false);
+  // still live if something is actually in play alongside a finished one
+  expect(isGameweekLive([
+    { started: true, finished_provisional: true },
+    { started: true, finished_provisional: false },
+  ])).toBe(true);
+});
+
 test("computeLiveStandings sums multiplier×points and sorts desc", () => {
   const entries = [{ entry: 1, name: "Alice" }, { entry: 2, name: "Bob" }];
   const picks = {

@@ -1,15 +1,16 @@
 export type Fixture = { started: boolean; finished_provisional: boolean };
 
 export function isGameweekLive(fixtures: Fixture[]): boolean {
-  if (fixtures.length === 0) return false;
-  const anyStarted = fixtures.some((f) => f.started);
-  const allFinished = fixtures.every((f) => f.finished_provisional);
-  return anyStarted && !allFinished;
+  return fixtures.some((f) => f.started && !f.finished_provisional);
 }
 
 export type LeagueEntry = { entry: number; name: string };
 type Pick = { element: number; multiplier: number };
 
+// Live totals are computed from the deadline-locked picks and are a
+// provisional approximation: a captain who doesn't play still counts x2,
+// and auto-substitutions / vice-captain promotion only resolve once the
+// gameweek is finalized.
 export function computeLiveStandings(
   entries: LeagueEntry[],
   picksByEntry: Record<number, Pick[]>,
