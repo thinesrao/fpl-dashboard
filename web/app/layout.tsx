@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const archivo = Archivo_Black({ subsets: ["latin"], weight: "400", variable: "--font-archivo" });
 
 export const metadata: Metadata = {
-  title: "PepRoulette™ FPL Dashboard",
+  title: "PepRoulette FPL",
   description: "Fantasy Premier League mini-league analytics and awards.",
 };
 
