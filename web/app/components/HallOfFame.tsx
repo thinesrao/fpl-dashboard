@@ -80,10 +80,10 @@ function HofPlaceholder() {
 
 export function HallOfFame({ data }: { data: DashboardData }) {
   const cards: HofCard[] = [
-    ...weeklyLogCards(getSheet(data, "weekly_manager_log"), (row) => `GW${row.Gameweek ?? ""}`),
+    ...weeklyLogCards(getSheet(data, "weekly_manager_log"), (row) => `Classic GW${row.Gameweek ?? ""}`),
+    ...weeklyLogCards(getSheet(data, "fpl_challenge_weekly_log"), (row) => `Challenge GW${row.Gameweek ?? ""}`),
     ...monthlyCards(data, "classic_monthly_", "Classic"),
     ...monthlyCards(data, "h2h_monthly_", "H2H"),
-    ...weeklyLogCards(getSheet(data, "fpl_challenge_weekly_log"), (row) => `Challenge GW${row.Gameweek ?? ""}`),
   ];
 
   return (
