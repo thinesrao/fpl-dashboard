@@ -8,6 +8,7 @@ import { StandardTab } from "./StandardTab";
 import { SpecialTab } from "./SpecialTab";
 import { DetailedTab } from "./DetailedTab";
 import { ManagerSelect } from "./ManagerSelect";
+import { LiveSection } from "./LiveSection";
 
 export function DashboardShell({ data }: { data: DashboardData }) {
   const [highlight, setHighlight] = useState("");
@@ -25,6 +26,7 @@ export function DashboardShell({ data }: { data: DashboardData }) {
             Awards final to Gameweek {data.meta.lastFinishedGw}
           </p>
         </section>
+        <LiveSection />
         <ManagerSelect managers={managers} value={highlight} onChange={setHighlight} />
         <Tabs
           items={[
