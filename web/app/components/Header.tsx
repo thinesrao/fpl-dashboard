@@ -22,10 +22,6 @@ export function Header({ gameweek, lastUpdated }: { gameweek: number; lastUpdate
         <div className="text-xs text-[--muted]">
           <b className="text-[--ink]">Gameweek {gameweek}</b> · updated {formatUpdated(lastUpdated)} (UTC)
         </div>
-        <div className="flex items-center gap-1.5 rounded-full border border-[rgba(255,77,109,0.4)] bg-[rgba(255,77,109,0.14)] px-2.5 py-1 text-xs font-extrabold text-[#ff9bb0]">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-[--live]" aria-hidden />
-          LIVE
-        </div>
         <Link href="/admin/login" className="text-xs text-[--muted] hover:text-[--ink]">
           Admin
         </Link>
