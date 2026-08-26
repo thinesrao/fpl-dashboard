@@ -13,7 +13,7 @@ export function Header({ gameweek, lastUpdated }: { gameweek: number; lastUpdate
   return (
     <header className="sticky top-0 z-30 border-b border-[--line] bg-[rgba(10,10,15,0.82)] backdrop-blur">
       <div className="mx-auto flex h-[60px] max-w-5xl items-center gap-3.5 px-5">
-        <img src="/logo-mark.png" alt="PepRoulette" className="h-[30px] w-[30px] rounded-lg" />
+        <img src="/logo-mark.png" alt="PepRoulette" className="h-9 w-auto" />
         <div className="font-display text-xl tracking-wide">
           <span className="text-[--ink]">PEP</span>
           <span className="text-[--pink]">ROULETTE</span>
