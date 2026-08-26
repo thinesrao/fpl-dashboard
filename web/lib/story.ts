@@ -105,10 +105,16 @@ export function talkingPoints(data: DashboardData): TalkingPoints {
       : null;
 
   const spoonRows = getSheet(data, "reversed_motw");
-  const spoon =
-    spoonRows.length > 0 && toNum(spoonRows[0].Score) > 0
-      ? { manager: managerOf(spoonRows[0]), detail: `${toNum(spoonRows[0].Score)}× bottom` }
-      : null;
+  const standingsForSpoon = getSheet(data, "classic_league_standings");
+  let spoon: TalkingPoint | null;
+  if (spoonRows.length > 0 && toNum(spoonRows[0].Score) > 0) {
+    spoon = { manager: managerOf(spoonRows[0]), detail: `${toNum(spoonRows[0].Score)}× bottom` };
+  } else if (standingsForSpoon.length > 0) {
+    const lastPlace = standingsForSpoon[standingsForSpoon.length - 1];
+    spoon = { manager: managerOf(lastPlace), detail: "propping up the table" };
+  } else {
+    spoon = null;
+  }
 
   const highestRows = getSheet(data, "highest_gw_score");
   const highest =

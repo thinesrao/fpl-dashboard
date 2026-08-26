@@ -96,6 +96,19 @@ describe("talkingPoints", () => {
     expect(tp.highest).toBeNull();
     expect(tp.badLuck).toBeNull();
   });
+
+  it("falls back to last place in classic standings when reversed_motw is empty/zero", () => {
+    const data = makeData({
+      reversed_motw: [{ Manager: "Eve", Score: 0 }],
+      classic_league_standings: [
+        { Manager: "Carol", Total: 220 },
+        { Manager: "Alice", Total: 200 },
+        { Manager: "Ghost", Total: 90 },
+      ],
+    });
+    const tp = talkingPoints(data);
+    expect(tp.spoon).toEqual({ manager: "Ghost", detail: "propping up the table" });
+  });
 });
 
 describe("cabinet", () => {
