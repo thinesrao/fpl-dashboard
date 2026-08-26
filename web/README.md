@@ -4,6 +4,48 @@ Next.js App Router dashboard for the Pep's Roulette mini-league. This is the
 public read-only dashboard described in Plan 2 of the Streamlit → Vercel
 migration; the data itself is published by the Python pipeline in Plan 1.
 
+## Dashboard IA
+
+The dashboard is a single, story-led scroll — no tabs. `DashboardShell`
+(`app/components/DashboardShell.tsx`) composes it top to bottom:
+
+1. **Header** — brand mark, current gameweek, last-updated time, live badge.
+2. **Live section** — an in-progress-gameweek leaderboard overlay, shown only
+   while a gameweek is live (polls `/api/live`).
+3. **Verdict hero** — the headline call: this gameweek's Manager of the Week
+   and how tight the title race is.
+4. **Talking points** — four data-derived callouts (biggest riser, spoon
+   watch, highest GW score, worst H2H luck).
+5. **The race** — classic/H2H standings with a switcher; tap any manager's
+   name to open their profile.
+6. **Trophy cabinet** — one coin per special award that has data; tap a coin
+   to open its detail (top chasers + a cumulative progression chart, when the
+   award sheet carries per-GW columns).
+7. **Hall of Fame** — a horizontally-scrolling strip of past weekly/monthly
+   winners.
+
+All of these are pure derivations from the fetched dashboard JSON, computed
+in `lib/story.ts` (`verdict`, `talkingPoints`, `cabinet`, `trophyChase`,
+`managerProfile`) and unit-tested there rather than in the components.
+
+**Overlays, not routes.** Trophy detail and manager profile are modal
+overlays, not separate pages — `OverlayContext` (`app/components/
+OverlayContext.tsx`) exposes `openTrophy(key)` / `openManager(name)`, and
+`DashboardShell` holds the open state and renders `TrophyDetail` /
+`ManagerProfile` on top of the scroll when set. There's no dedicated
+manager-highlight selector; picking a manager to look at is just tapping
+their name in the race board.
+
+### Brand assets
+
+- `app/icon.png`, `app/apple-icon.png` — Next.js App Router icon convention
+  (favicon / apple touch icon), served automatically.
+- `public/logo-mark.png`, `public/icon-192.png`, `public/icon-512.png` — the
+  header logo mark and PWA-style icon sizes.
+- `docs/brand/peproulette-logo.jpg` and `docs/brand/redesign-mockup.html` —
+  source brand assets and the reference mockup this IA was implemented from
+  (tracked for reference, not built).
+
 ## Local development
 
 ```bash
@@ -31,7 +73,11 @@ npm run e2e
 ```
 
 The Playwright config (`playwright.config.ts`) boots `npm run dev` itself
-and reuses an already-running dev server if one is up.
+and reuses an already-running dev server if one is up. `e2e/smoke.spec.ts`
+loads the dashboard against the committed fixture and walks the story IA end
+to end: header brand, verdict headline, race board, trophy cabinet, then
+taps a trophy coin to open its detail overlay and a manager's name to open
+their profile overlay.
 
 ## Production build
 

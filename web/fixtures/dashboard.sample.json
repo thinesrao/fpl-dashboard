@@ -14,8 +14,16 @@
       {"Standings": 2, "Team": "B", "Manager": "Wei Jie", "Goals": 5, "GW1": 2, "GW2": 3}
     ],
     "classic_monthly_august": [{"Standings": 1, "Manager": "Danish Aziz", "Points": 250}],
-    "weekly_manager_log": [{"Gameweek": 1, "Winner": "Wei Jie", "Score": 89}],
-    "fpl_challenge_weekly_log": [{"Gameweek": 1, "Winner": "Faiz Rahman", "Score": 42}]
+    "weekly_manager_log": [{"Gameweek": 1, "Winner": "Wei Jie", "Score": 89}, {"Gameweek": 1, "Manager": "Matthew Mohan", "Score": 85}],
+    "fpl_challenge_weekly_log": [{"Gameweek": 1, "Winner": "Faiz Rahman", "Score": 42}],
+    "gw_scores": [
+      {"Manager": "Matthew Mohan", "GW1": 85, "GW2": 60},
+      {"Manager": "arai oh arai", "GW1": 76, "GW2": 71}
+    ],
+    "shooting_stars": [{"Standings": 1, "Team": "T", "Manager": "arai oh arai", "Total": 6, "GW1": 6}],
+    "reversed_motw": [{"Standings": 1, "Team": "U", "Manager": "Adam Lee", "Score": 2}],
+    "highest_gw_score": [{"Standings": 1, "Team": "V", "Manager": "Matthew Mohan", "Score": 85}],
+    "bad_luck_h2h": [{"Standings": 1, "Team": "W", "Manager": "Suria Devi", "Score": 3}]
   },
   "generated_from_metadata": { "last_finished_gw": 3, "last_updated_utc": "2026-08-25T10:30:00+00:00" }
 }

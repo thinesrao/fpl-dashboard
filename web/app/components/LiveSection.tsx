@@ -74,12 +74,12 @@ export function LiveSection({
   if (!data.live) return null;
 
   return (
-    <div className="mt-4 rounded-2xl border border-[rgba(255,77,109,0.28)] bg-[rgba(255,77,109,0.05)] p-4">
-      <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#ff8ba3]">
+    <div className="mt-4 rounded-2xl border border-[rgba(255,77,109,0.3)] bg-[rgba(255,77,109,0.05)] p-4">
+      <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#ff9bb0]">
         <span className="h-2 w-2 animate-pulse rounded-full bg-[--live]" aria-hidden />
         LIVE · GW{data.gameweek}
       </div>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2.5 sm:grid-cols-2">
         {data.standings.map((r, i) => {
           const isMe = Boolean(highlight) && r.manager === highlight;
           return (
@@ -87,17 +87,17 @@ export function LiveSection({
               key={r.entry}
               data-highlighted={isMe ? "true" : undefined}
               className={
-                "flex items-center justify-between rounded-lg border px-3 py-2 " +
+                "flex items-center justify-between rounded-[11px] border px-3 py-2.5 " +
                 (isMe
-                  ? "border-[--accent] bg-[rgba(43,252,164,0.12)]"
+                  ? "border-[--lime] bg-[rgba(198,255,0,0.1)]"
                   : "border-[--line] bg-[--panel]")
               }
             >
               <span className="text-sm">
                 <span className="text-[--muted]">{i + 1}.</span>{" "}
-                <span className={isMe ? "font-semibold text-[--accent]" : ""}>{r.manager}</span>
+                <span className={isMe ? "font-semibold text-[--lime]" : "font-semibold"}>{r.manager}</span>
               </span>
-              <span className="font-display text-sm">{r.points}</span>
+              <span className="font-display text-lg">{r.points}</span>
             </div>
           );
         })}

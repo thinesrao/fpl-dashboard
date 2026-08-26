@@ -11,21 +11,22 @@ function formatUpdated(iso: string): string {
 
 export function Header({ gameweek, lastUpdated }: { gameweek: number; lastUpdated: string }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-[--line] bg-[rgba(11,15,20,0.72)] backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-5xl items-center gap-4 px-5">
-        <div className="flex items-center gap-2.5 font-display text-lg">
-          <span
-            className="h-7 w-7 rounded-lg"
-            style={{ background: "conic-gradient(from 210deg,var(--accent),#39a0ff,var(--accent))" }}
-            aria-hidden
-          />
-          PepRoulette™
+    <header className="sticky top-0 z-30 border-b border-[--line] bg-[rgba(10,10,15,0.82)] backdrop-blur">
+      <div className="mx-auto flex h-[60px] max-w-5xl items-center gap-3.5 px-5">
+        <img src="/logo-mark.png" alt="PepRoulette" className="h-[30px] w-[30px] rounded-lg" />
+        <div className="font-display text-xl tracking-wide">
+          <span className="text-[--ink]">PEP</span>
+          <span className="text-[--pink]">ROULETTE</span>
         </div>
         <div className="flex-1" />
         <div className="text-xs text-[--muted]">
           <b className="text-[--ink]">Gameweek {gameweek}</b> · updated {formatUpdated(lastUpdated)} (UTC)
         </div>
-        <Link href="/admin/login" className="ml-4 text-xs text-[--muted] hover:text-[--accent]">
+        <div className="flex items-center gap-1.5 rounded-full border border-[rgba(255,77,109,0.4)] bg-[rgba(255,77,109,0.14)] px-2.5 py-1 text-xs font-extrabold text-[#ff9bb0]">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-[--live]" aria-hidden />
+          LIVE
+        </div>
+        <Link href="/admin/login" className="text-xs text-[--muted] hover:text-[--ink]">
           Admin
         </Link>
       </div>
