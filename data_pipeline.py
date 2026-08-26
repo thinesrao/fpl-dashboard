@@ -134,6 +134,24 @@ def get_all_h2h_matches(league_id):
     return {'results': all_matches}
 
 
+def write_worksheet(spreadsheet, name, df):
+    """Overwrite (or create) a worksheet with df, retrying transient API errors.
+
+    Clears the sheet if it already exists, creates it otherwise, then writes
+    the dataframe without its index. Wrapped in retry_transient so a momentary
+    Google Sheets 429/5xx doesn't fail the whole run.
+    """
+    def _write():
+        try:
+            worksheet = spreadsheet.worksheet(name)
+            worksheet.clear()
+        except gspread.WorksheetNotFound:
+            worksheet = spreadsheet.add_worksheet(title=name, rows=len(df) + 1, cols=len(df.columns) + 1)
+        set_with_dataframe(worksheet, df, include_index=False)
+
+    retry_transient(_write)
+
+
 def build_standings_df(score_by_manager_id, manager_df):
     """Build a Standings/Team/Manager/Score dataframe from a {manager_id: score} mapping."""
     rows = [{'manager_id': mid, 'Score': score_by_manager_id.get(mid, 0)} for mid in manager_df['manager_id']]
@@ -716,19 +734,30 @@ def main():
 
     print("Writing all processed data to Google Sheets...")
     for name, df in worksheets_to_write.items():
-        def _write_sheet(name=name, df=df):
-            try:
-                worksheet = spreadsheet.worksheet(name)
-                worksheet.clear()
-            except gspread.WorksheetNotFound:
-                worksheet = spreadsheet.add_worksheet(title=name, rows=len(df) + 1, cols=len(df.columns) + 1)
-            set_with_dataframe(worksheet, df, include_index=False)
-
-        # Retry transient Sheets API errors (429/5xx) so a momentary Google
-        # hiccup doesn't fail the whole run.
-        retry_transient(_write_sheet)
+        write_worksheet(spreadsheet, name, df)
         print(f"  Successfully wrote to '{name}' worksheet.")
         time.sleep(3)
+
+    # --- Back up the manual penalty inputs to Google Sheets ---
+    # Supabase is the source of truth; this mirrors the current rows into a
+    # `manual_penalty_data` sheet as a human-readable backup. A full overwrite
+    # each run reflects both additions and deletions. Kept OUT of
+    # worksheets_to_write on purpose so it never lands in the public
+    # dashboard.json — it's a backup, not dashboard content.
+    # A backup failure must never block the essential dashboard.json emit, so
+    # swallow any error here (retry_transient already handles 429/5xx; this
+    # also guards non-transient auth/quota errors and unexpected schema drift).
+    print("Backing up manual penalty data to Google Sheets...")
+    try:
+        if not manual_penalty_df.empty:
+            penalty_backup_df = manual_penalty_df[['Gameweek', 'Player_Name', 'Event_Type']].copy()
+            penalty_backup_df['Gameweek'] = penalty_backup_df['Gameweek'].astype(int)
+        else:
+            penalty_backup_df = pd.DataFrame(columns=['Gameweek', 'Player_Name', 'Event_Type'])
+        write_worksheet(spreadsheet, "manual_penalty_data", penalty_backup_df)
+        print("  Successfully wrote to 'manual_penalty_data' worksheet.")
+    except Exception as e:
+        print(f"Warning: penalty backup to Google Sheets failed ({e}); continuing.")
 
     # --- Emit the static dashboard.json for the Vercel frontend ---
     print("Writing dashboard.json...")
