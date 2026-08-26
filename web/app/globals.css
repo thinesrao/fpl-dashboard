@@ -15,6 +15,7 @@
   --cyan: #4ad9ff;
   --purple: #9b5cff;
   --live: #ff4d6d;
+  --accent: #c6ff00; /* alias to --lime; kept for the admin panel's buttons */
 }
 
 body {
