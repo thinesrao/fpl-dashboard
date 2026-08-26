@@ -76,27 +76,29 @@ export function TrophyDetail({
         </div>
 
         {series && series.length > 0 ? (
-          <div className="mt-4" data-testid="trophy-chart">
-            <LineChart width={460} height={180} data={series}>
-              <XAxis
-                dataKey="gameweek"
-                tick={{ fill: "#8f8aa3", fontSize: 12 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis hide />
-              {seriesKeys.map((key, idx) => (
-                <Line
-                  key={key}
-                  type="monotone"
-                  dataKey={key}
-                  stroke={LINE_COLORS[idx % LINE_COLORS.length]}
-                  strokeWidth={2.5}
-                  dot={false}
-                  isAnimationActive={false}
+          <div className="mt-4 overflow-x-auto">
+            <div data-testid="trophy-chart">
+              <LineChart width={460} height={180} data={series}>
+                <XAxis
+                  dataKey="gameweek"
+                  tick={{ fill: "#8f8aa3", fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
                 />
-              ))}
-            </LineChart>
+                <YAxis hide />
+                {seriesKeys.map((key, idx) => (
+                  <Line
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    stroke={LINE_COLORS[idx % LINE_COLORS.length]}
+                    strokeWidth={2.5}
+                    dot={false}
+                    isAnimationActive={false}
+                  />
+                ))}
+              </LineChart>
+            </div>
           </div>
         ) : (
           <p className="mt-4 text-xs text-[--muted]">
