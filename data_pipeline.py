@@ -19,6 +19,7 @@ from award_calculators import (
 from penalty_source import fetch_penalty_events, get_supabase_client
 from dashboard_export import build_dashboard_payload, write_dashboard_json
 from retry_util import retry_transient
+from gw_scores_export import build_gw_scores_wide
 
 # --- Configuration ---
 # NOTE: before updating the league IDs below, also run scripts/migrate_new_season_sheet.py
@@ -528,6 +529,9 @@ def main():
                 all_gw_scores_list.append({'gameweek': gw_data['event'], 'manager_id': manager_id, 'score': true_gw_score})
     
     all_gw_scores_df = pd.DataFrame(all_gw_scores_list)
+    if all_gw_scores_list:
+        name_by_id = dict(zip(manager_df["manager_id"], manager_df["manager_name"]))
+        worksheets_to_write["gw_scores"] = build_gw_scores_wide(all_gw_scores_list, name_by_id)
     all_gw_scores_df['month'] = all_gw_scores_df['gameweek'].map(gw_month_map)
     
     if not all_gw_scores_df.empty:
