@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { HighlightModel, Hero } from "./highlight";
+import type { HighlightModel, Hero, MonthHighlight } from "./highlight";
 
 // Shared building blocks for the gameweek-highlight image, rendered by Satori
 // (next/og) in two compositions: a 1080×1350 portrait for the share/download
@@ -18,8 +18,8 @@ export const C = {
   cyan: "#4ad9ff",
   purple: "#9b5cff",
 };
-// Per-competition accent: Classic = lime, Challenge = cyan.
-const COMP_COLOR: Record<string, string> = { Classic: C.lime, Challenge: C.cyan };
+// Per-competition accent: Classic = lime, Challenge = cyan (week); H2H = purple (month).
+const COMP_COLOR: Record<string, string> = { Classic: C.lime, Challenge: C.cyan, H2H: C.purple };
 const TILE_COLORS = [C.pink, C.gold, C.purple, C.cyan];
 
 const BG = "linear-gradient(160deg, #161320 0%, #0b0912 72%)";
@@ -100,6 +100,64 @@ function HeroBlock({ hero, nameSize }: { hero: Hero; nameSize: number }) {
   );
 }
 
+/** One Manager-of-the-Month column: the finalized winner, or the top-3 race
+ * chasing the lead while the month is still running. */
+function MonthColumn({ mh }: { mh: MonthHighlight }) {
+  const color = COMP_COLOR[mh.competition] ?? C.lime;
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        padding: "20px 22px",
+        borderRadius: 20,
+        border: `2px solid ${C.line}`,
+        background: "rgba(255,255,255,0.03)",
+      }}
+    >
+      <div style={{ display: "flex", fontSize: 18, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color }}>
+        {mh.competition} · {mh.month}
+      </div>
+      <div style={{ display: "flex", fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: C.muted, marginTop: 4 }}>
+        {mh.final ? "Manager of the Month" : "Leading the race"}
+      </div>
+
+      {mh.final ? (
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 12 }}>
+          <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: C.ink }}>{mh.leaders[0]?.manager}</div>
+          <div style={{ display: "flex", fontFamily: "Fredoka", fontWeight: 700, fontSize: 32, color, marginTop: 4 }}>
+            {mh.leaders[0]?.points} pts
+          </div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 12, gap: 9 }}>
+          {mh.leaders.map((l, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center" }}>
+              <div style={{ display: "flex", fontFamily: "Anton", fontSize: 20, width: 26, color: i === 0 ? color : C.muted }}>
+                {i + 1}
+              </div>
+              <div style={{ display: "flex", fontSize: 22, fontWeight: 700, color: C.ink }}>{l.manager}</div>
+              <div
+                style={{
+                  display: "flex",
+                  marginLeft: "auto",
+                  fontFamily: "Fredoka",
+                  fontWeight: 700,
+                  fontSize: 22,
+                  color: i === 0 ? color : C.soft,
+                }}
+              >
+                {l.points}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TalkingTiles({ tiles }: { tiles: HighlightModel["tiles"] }) {
   // Satori has no CSS grid — lay tiles out as flex rows of two.
   const rows = [tiles.slice(0, 2), tiles.slice(2, 4)].filter((r) => r.length > 0);
@@ -154,7 +212,7 @@ export function PortraitCard({ m, logoSrc }: { m: HighlightModel; logoSrc: strin
 
       {/* Center the content group between the brand row and footer so the space
           is balanced rather than pooling in one big gap. */}
-      <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", gap: 56 }}>
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", gap: 44 }}>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", fontSize: 22, fontWeight: 800, letterSpacing: 6, color: C.muted, marginBottom: 24 }}>
             MANAGERS OF THE WEEK
@@ -162,7 +220,7 @@ export function PortraitCard({ m, logoSrc }: { m: HighlightModel; logoSrc: strin
           {m.heroes.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
               {m.heroes.map((h) => (
-                <HeroBlock key={h.competition} hero={h} nameSize={76} />
+                <HeroBlock key={h.competition} hero={h} nameSize={72} />
               ))}
             </div>
           ) : (
@@ -171,6 +229,19 @@ export function PortraitCard({ m, logoSrc }: { m: HighlightModel; logoSrc: strin
             </div>
           )}
         </div>
+
+        {m.months.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", fontSize: 22, fontWeight: 800, letterSpacing: 6, color: C.muted, marginBottom: 18 }}>
+              MANAGER OF THE MONTH
+            </div>
+            <div style={{ display: "flex", gap: 14 }}>
+              {m.months.map((mh) => (
+                <MonthColumn key={mh.competition} mh={mh} />
+              ))}
+            </div>
+          </div>
+        )}
 
         {m.tiles.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column" }}>
