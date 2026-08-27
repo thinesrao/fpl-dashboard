@@ -1,94 +1,83 @@
-import { verdict } from "./story";
+import { talkingPoints, type TalkingPoint } from "./story";
 import { toNum } from "./transforms";
 import { getSheet, type DashboardData, type SheetRow } from "./types";
 
-/** One stat tile on the shareable highlight card. */
-export type HighlightTile = { label: string; name: string; value: string };
+/** A Manager-of-the-Week hero — one per competition (Classic, Challenge). */
+export type Hero = { competition: string; manager: string; points: number };
+
+/** One talking-point tile: a labelled callout about a manager. */
+export type HighlightTile = { label: string; name: string; detail: string };
 
 export type HighlightModel = {
   gameweek: number;
-  /** null before GW1 awards exist (mirrors verdict()). */
-  headline: { manager: string; line: string; points: number } | null;
-  podium: { rank: number; manager: string; points: number }[];
+  /** The main highlights: Classic MotW first, then Challenge MotW. Each present
+   * only when its weekly log has data. */
+  heroes: Hero[];
+  /** Auto-derived talking points of the week (from story.talkingPoints), minus
+   * any that just restate a hero. */
   tiles: HighlightTile[];
 };
-
-/** Stat dimensions the tiles draw from, in priority order. Labels are
- * emoji-free (Satori has no emoji font). `positive` requires a score above zero
- * (skips not-yet-earned awards); `sign` prefixes the value with "+". */
-const TILE_POOL: { label: string; key: string; positive?: boolean; sign?: boolean }[] = [
-  { label: "Top score", key: "highest_gw_score" },
-  { label: "Biggest climber", key: "shooting_stars", positive: true, sign: true },
-  { label: "Penalty king", key: "penalty_king", positive: true },
-  { label: "Golden boot", key: "golden_boot", positive: true },
-  { label: "Playmaker", key: "playmaker", positive: true },
-  { label: "Golden glove", key: "golden_glove", positive: true },
-  { label: "Bench king", key: "bench_king", positive: true },
-  { label: "Dream team", key: "dream_team", positive: true },
-];
 
 function managerOf(row: SheetRow): string {
   return String(row.Manager ?? "");
 }
 
-/** Award sheets share the shape Standings, Team, Manager, <score>; the 4th
- * column (index 3) is always the score. Returns null when the sheet is empty
- * or (when `positiveOnly`) the leader's score isn't above zero. */
-function awardLeader(
-  data: DashboardData,
-  key: string,
-  positiveOnly = false,
-): { manager: string; score: number } | null {
-  const rows = getSheet(data, key);
-  if (rows.length === 0) return null;
-  const row0 = rows[0];
-  const scoreKey = Object.keys(row0)[3];
-  const score = scoreKey ? toNum(row0[scoreKey]) : 0;
-  if (positiveOnly && score <= 0) return null;
-  return { manager: managerOf(row0), score };
+/** Manager of the Week for a weekly log (Gameweek, Team, Manager, Score): the
+ * row with the highest Gameweek, falling back to the last row. Null if empty. */
+function latestWeeklyWinner(data: DashboardData, sheet: string): { manager: string; points: number } | null {
+  const log = getSheet(data, sheet);
+  if (log.length === 0) return null;
+  let best = log[0];
+  let maxGw = -Infinity;
+  for (const row of log) {
+    const gw = toNum(row.Gameweek);
+    if (gw >= maxGw) {
+      maxGw = gw;
+      best = row;
+    }
+  }
+  return { manager: managerOf(best), points: toNum(best.Score) };
+}
+
+/** Talking-point detail strings are authored for the DOM, where ▲/× render
+ * fine; Satori (the image renderer) has no glyphs for them, so swap in ASCII. */
+function sanitizeDetail(detail: string): string {
+  return detail.replace(/▲/g, "+").replace(/×/g, "x");
 }
 
 /**
- * Auto-derive the shareable "highlight of the gameweek" card from the same
- * dashboard data the page renders. Pure: no rendering, no I/O. Tiles are
- * included only when their underlying award has data, so an early-season
- * gameweek simply shows fewer of them.
+ * Auto-derive the shareable "highlight of the gameweek" card. The main
+ * highlights are the two Managers of the Week (Classic + Challenge); the tiles
+ * are the week's talking points (story.talkingPoints), each shown only when it
+ * names a manager not already featured as a hero or an earlier tile.
  */
 export function highlightModel(data: DashboardData): HighlightModel {
-  const v = verdict(data);
+  const classic = latestWeeklyWinner(data, "weekly_manager_log");
+  const challenge = latestWeeklyWinner(data, "fpl_challenge_weekly_log");
 
-  const standings = getSheet(data, "classic_league_standings");
-  const podium = standings.slice(0, 3).map((row, i) => ({
-    rank: i + 1,
-    manager: managerOf(row),
-    points: toNum(row.Total),
-  }));
+  const heroes: Hero[] = [];
+  if (classic) heroes.push({ competition: "Classic", ...classic });
+  if (challenge) heroes.push({ competition: "Challenge", ...challenge });
 
-  // Fill up to four stat tiles from the pool below, each with a DISTINCT
-  // manager: skip the headline manager (already the hero) and anyone already
-  // shown in an earlier tile. This keeps the card full and varied while never
-  // repeating a name — and there is deliberately no "Leader" tile, since the
-  // gold podium row #1 already is the standings leader.
-  const seen = new Set<string>();
-  if (v?.manager) seen.add(v.manager);
+  // No manager appears twice: seed with the heroes, then add talking points for
+  // anyone not already shown.
+  const seen = new Set(heroes.map((h) => h.manager));
+
+  const tp = talkingPoints(data);
+  const candidates: { label: string; point: TalkingPoint | null }[] = [
+    { label: "Highest score", point: tp.highest },
+    { label: "Biggest riser", point: tp.riser },
+    { label: "Worst luck", point: tp.badLuck },
+    { label: "Wooden spoon", point: tp.spoon },
+  ];
 
   const tiles: HighlightTile[] = [];
-  for (const a of TILE_POOL) {
+  for (const c of candidates) {
     if (tiles.length >= 4) break;
-    const leader = awardLeader(data, a.key, a.positive ?? false);
-    if (!leader || seen.has(leader.manager)) continue;
-    seen.add(leader.manager);
-    tiles.push({
-      label: a.label,
-      name: leader.manager,
-      value: a.sign ? `+${leader.score}` : `${leader.score}`,
-    });
+    if (!c.point || seen.has(c.point.manager)) continue;
+    seen.add(c.point.manager);
+    tiles.push({ label: c.label, name: c.point.manager, detail: sanitizeDetail(c.point.detail) });
   }
 
-  return {
-    gameweek: data.meta.lastFinishedGw,
-    headline: v ? { manager: v.manager, line: v.line, points: v.points } : null,
-    podium,
-    tiles,
-  };
+  return { gameweek: data.meta.lastFinishedGw, heroes, tiles };
 }
