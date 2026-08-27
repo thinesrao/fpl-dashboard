@@ -18,8 +18,33 @@ export type HighlightModel = {
   tiles: HighlightTile[];
 };
 
+/** Award sheets to backfill the tiles with once the genuine talking points run
+ * out, so the card reliably fills up to four. Each is a season-standing leader;
+ * `unit` is appended to the value for the tile detail. */
+const AWARD_FILL: { label: string; key: string; unit: string }[] = [
+  { label: "Golden boot", key: "golden_boot", unit: "goals" },
+  { label: "Playmaker", key: "playmaker", unit: "assists" },
+  { label: "Golden glove", key: "golden_glove", unit: "clean sheets" },
+  { label: "Bench king", key: "bench_king", unit: "pts benched" },
+  { label: "Transfer king", key: "transfer_king", unit: "pts" },
+  { label: "Dream team", key: "dream_team", unit: "DT pts" },
+  { label: "Defensive king", key: "defensive_king", unit: "pts" },
+];
+
 function managerOf(row: SheetRow): string {
   return String(row.Manager ?? "");
+}
+
+/** Leader of an award sheet (Standings, Team, Manager, <score>): the 4th column
+ * is always the score. Null when empty or the leader's score isn't positive. */
+function awardLeader(data: DashboardData, key: string): { manager: string; score: number } | null {
+  const rows = getSheet(data, key);
+  if (rows.length === 0) return null;
+  const row0 = rows[0];
+  const scoreKey = Object.keys(row0)[3];
+  const score = scoreKey ? toNum(row0[scoreKey]) : 0;
+  if (score <= 0) return null;
+  return { manager: managerOf(row0), score };
 }
 
 /** Manager of the Week for a weekly log (Gameweek, Team, Manager, Score): the
@@ -77,6 +102,17 @@ export function highlightModel(data: DashboardData): HighlightModel {
     if (!c.point || seen.has(c.point.manager)) continue;
     seen.add(c.point.manager);
     tiles.push({ label: c.label, name: c.point.manager, detail: sanitizeDetail(c.point.detail) });
+  }
+
+  // Backfill with award leaders so the card stays full when the week is short on
+  // genuine talking points (e.g. no risers yet at GW1). Still de-duped by
+  // manager against the heroes and earlier tiles.
+  for (const a of AWARD_FILL) {
+    if (tiles.length >= 4) break;
+    const leader = awardLeader(data, a.key);
+    if (!leader || seen.has(leader.manager)) continue;
+    seen.add(leader.manager);
+    tiles.push({ label: a.label, name: leader.manager, detail: `${leader.score} ${a.unit}` });
   }
 
   return { gameweek: data.meta.lastFinishedGw, heroes, tiles };

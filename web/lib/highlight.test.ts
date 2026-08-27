@@ -57,6 +57,30 @@ test("keeps the Highest-score tile when it's a different manager, and caps at 4"
   ]);
 });
 
+test("backfills tiles from award leaders when talking points are sparse", () => {
+  const gw1: DashboardData = {
+    sheets: {
+      weekly_manager_log: [{ Gameweek: 1, Team: "", Manager: "Woon Kun Shum", Score: 67 }],
+      fpl_challenge_weekly_log: [{ Gameweek: 1, Team: "", Manager: "Nicholas Thines", Score: 86 }],
+      highest_gw_score: [{ Standings: 1, Team: "", Manager: "Woon Kun Shum", Score: 67 }], // == Classic hero
+      // no shooting_stars → no riser yet at GW1
+      bad_luck_h2h: [{ Standings: 1, Team: "", Manager: "Szu how", Score: 1 }],
+      reversed_motw: [{ Standings: 1, Team: "", Manager: "Stephen Lo", Score: 1 }],
+      golden_boot: [{ Standings: 1, Team: "", Manager: "Ben Tan", Goals: 3 }],
+      playmaker: [{ Standings: 1, Team: "", Manager: "Chris Lim", Assists: 2 }],
+    },
+    meta: { lastFinishedGw: 1, lastUpdatedUtc: "" },
+  };
+  const m = highlightModel(gw1);
+  // 2 real talking points + 2 award backfills = a full 4 tiles.
+  expect(m.tiles).toEqual([
+    { label: "Worst luck", name: "Szu how", detail: "1-week winless" },
+    { label: "Wooden spoon", name: "Stephen Lo", detail: "1x bottom" },
+    { label: "Golden boot", name: "Ben Tan", detail: "3 goals" },
+    { label: "Playmaker", name: "Chris Lim", detail: "2 assists" },
+  ]);
+});
+
 test("falls back to just the Classic hero when there's no Challenge log", () => {
   const classicOnly: DashboardData = {
     sheets: { weekly_manager_log: [{ Gameweek: 1, Team: "", Manager: "Solo", Score: 55 }] },
