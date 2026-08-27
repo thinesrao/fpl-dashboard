@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { HighlightModel } from "./highlight";
+import type { HighlightModel, Hero } from "./highlight";
 
 // Shared building blocks for the gameweek-highlight image, rendered by Satori
 // (next/og) in two compositions: a 1080×1350 portrait for the share/download
@@ -18,7 +18,9 @@ export const C = {
   cyan: "#4ad9ff",
   purple: "#9b5cff",
 };
-const TILE_COLORS = [C.gold, C.cyan, C.lime, C.pink];
+// Per-competition accent: Classic = lime, Challenge = cyan.
+const COMP_COLOR: Record<string, string> = { Classic: C.lime, Challenge: C.cyan };
+const TILE_COLORS = [C.pink, C.gold, C.purple, C.cyan];
 
 const BG = "linear-gradient(160deg, #161320 0%, #0b0912 72%)";
 
@@ -79,48 +81,27 @@ function BrandRow({ logoSrc, gameweek }: { logoSrc: string; gameweek: number }) 
   );
 }
 
-function Podium({ podium }: { podium: HighlightModel["podium"] }) {
+/** One Manager-of-the-Week hero block. `nameSize` scales the name to the layout
+ * (larger in portrait, smaller side-by-side in landscape). */
+function HeroBlock({ hero, nameSize }: { hero: Hero; nameSize: number }) {
+  const color = COMP_COLOR[hero.competition] ?? C.lime;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, width: "100%" }}>
-      {podium.map((p) => {
-        const first = p.rank === 1;
-        return (
-          <div
-            key={p.rank}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "20px 26px",
-              borderRadius: 20,
-              border: `2px solid ${first ? "rgba(255,210,63,0.45)" : C.line}`,
-              background: first ? "rgba(255,210,63,0.10)" : "rgba(255,255,255,0.03)",
-            }}
-          >
-            <div style={{ display: "flex", fontFamily: "Anton", fontSize: 34, width: 44, color: first ? C.gold : C.muted }}>
-              {p.rank}
-            </div>
-            <div style={{ display: "flex", fontSize: 32, fontWeight: 700, color: C.ink }}>{p.manager}</div>
-            <div
-              style={{
-                display: "flex",
-                marginLeft: "auto",
-                fontFamily: "Fredoka",
-                fontWeight: 700,
-                fontSize: 38,
-                color: first ? C.gold : C.ink,
-              }}
-            >
-              {p.points}
-            </div>
-          </div>
-        );
-      })}
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", fontSize: 20, fontWeight: 800, letterSpacing: 4, color }}>
+        {hero.competition.toUpperCase()} · MANAGER OF THE WEEK
+      </div>
+      <div style={{ display: "flex", fontFamily: "Anton", fontSize: nameSize, lineHeight: 0.98, color: C.ink, marginTop: 8 }}>
+        {hero.manager}
+      </div>
+      <div style={{ display: "flex", fontFamily: "Anton", fontSize: Math.round(nameSize * 0.4), color, marginTop: 6 }}>
+        {hero.points} PTS
+      </div>
     </div>
   );
 }
 
-function Tiles({ tiles }: { tiles: HighlightModel["tiles"] }) {
-  // Satori has no CSS grid — lay the 4 tiles out as two flex rows of two.
+function TalkingTiles({ tiles }: { tiles: HighlightModel["tiles"] }) {
+  // Satori has no CSS grid — lay tiles out as flex rows of two.
   const rows = [tiles.slice(0, 2), tiles.slice(2, 4)].filter((r) => r.length > 0);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, width: "100%" }}>
@@ -139,21 +120,12 @@ function Tiles({ tiles }: { tiles: HighlightModel["tiles"] }) {
                 background: "rgba(255,255,255,0.03)",
               }}
             >
-              <div style={{ display: "flex", fontSize: 20, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: C.muted }}>
+              <div style={{ display: "flex", fontSize: 19, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: C.muted }}>
                 {t.label}
               </div>
-              <div style={{ display: "flex", fontSize: 30, fontWeight: 700, marginTop: 12, color: C.ink }}>{t.name}</div>
-              <div
-                style={{
-                  display: "flex",
-                  fontFamily: "Fredoka",
-                  fontWeight: 700,
-                  fontSize: 60,
-                  marginTop: 6,
-                  color: TILE_COLORS[(ri * 2 + ci) % TILE_COLORS.length],
-                }}
-              >
-                {t.value}
+              <div style={{ display: "flex", fontSize: 28, fontWeight: 700, marginTop: 10, color: C.ink }}>{t.name}</div>
+              <div style={{ display: "flex", fontSize: 24, fontWeight: 700, marginTop: 6, color: TILE_COLORS[(ri * 2 + ci) % TILE_COLORS.length] }}>
+                {t.detail}
               </div>
             </div>
           ))}
@@ -180,52 +152,45 @@ export function PortraitCard({ m, logoSrc }: { m: HighlightModel; logoSrc: strin
     >
       <BrandRow logoSrc={logoSrc} gameweek={m.gameweek} />
 
-      <div style={{ display: "flex", fontSize: 22, fontWeight: 800, letterSpacing: 6, color: C.muted, marginTop: 44 }}>
-        HIGHLIGHT OF THE WEEK
+      {/* Center the content group between the brand row and footer so the space
+          is balanced rather than pooling in one big gap. */}
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "center", gap: 56 }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", fontSize: 22, fontWeight: 800, letterSpacing: 6, color: C.muted, marginBottom: 24 }}>
+            MANAGERS OF THE WEEK
+          </div>
+          {m.heroes.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
+              {m.heroes.map((h) => (
+                <HeroBlock key={h.competition} hero={h} nameSize={76} />
+              ))}
+            </div>
+          ) : (
+            <div style={{ display: "flex", fontFamily: "Anton", fontSize: 72, color: C.ink }}>
+              Highlights land after GW1
+            </div>
+          )}
+        </div>
+
+        {m.tiles.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", fontSize: 22, fontWeight: 800, letterSpacing: 6, color: C.muted, marginBottom: 18 }}>
+              TALKING POINTS
+            </div>
+            <TalkingTiles tiles={m.tiles} />
+          </div>
+        )}
       </div>
 
-      {m.headline ? (
-        // marginTop clears the tall Anton cap-height so the name never rides up
-        // into the kicker above; 96/0.96 keeps the two lines tightly stacked.
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 32 }}>
-          <div style={{ display: "flex", fontFamily: "Anton", fontSize: 96, lineHeight: 0.96, color: C.ink }}>
-            {m.headline.manager}
-          </div>
-          <div style={{ display: "flex", fontFamily: "Anton", fontSize: 96, lineHeight: 0.96, color: C.pink }}>
-            {m.headline.line}.
-          </div>
-          <div style={{ display: "flex", fontFamily: "Anton", fontSize: 34, color: C.lime, marginTop: 18 }}>
-            {m.headline.points} PTS — MANAGER OF THE WEEK
-          </div>
-        </div>
-      ) : (
-        <div style={{ display: "flex", fontFamily: "Anton", fontSize: 72, marginTop: 12, color: C.ink }}>
-          Highlights land after GW1
-        </div>
-      )}
-
-      {m.podium.length > 0 && (
-        <div style={{ display: "flex", marginTop: 40 }}>
-          <Podium podium={m.podium} />
-        </div>
-      )}
-
-      {m.tiles.length > 0 && (
-        <div style={{ display: "flex", marginTop: 20 }}>
-          <Tiles tiles={m.tiles} />
-        </div>
-      )}
-
-      <div style={{ display: "flex", alignItems: "center", marginTop: "auto", fontSize: 22, color: C.muted }}>
+      <div style={{ display: "flex", alignItems: "center", fontSize: 22, color: C.muted }}>
         <span style={{ color: C.soft, fontWeight: 700 }}>peproulette.vercel.app</span>
       </div>
     </div>
   );
 }
 
-/** Landscape 1200×630 — the link-preview (opengraph) unfurl: headline on the
- * left, top-3 podium on the right. Tiles are dropped so it stays legible at
- * the small size crawlers render. */
+/** Landscape 1200×630 — the link-preview (opengraph) unfurl: the two Managers
+ * of the Week side by side. Tiles are dropped so it stays legible small. */
 export function LandscapeCard({ m, logoSrc }: { m: HighlightModel; logoSrc: string }) {
   return (
     <div
@@ -242,36 +207,19 @@ export function LandscapeCard({ m, logoSrc }: { m: HighlightModel; logoSrc: stri
     >
       <BrandRow logoSrc={logoSrc} gameweek={m.gameweek} />
 
-      <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 48, marginTop: 20 }}>
-        <div style={{ display: "flex", flexDirection: "column", flex: 1.35, justifyContent: "center" }}>
-          <div style={{ display: "flex", fontSize: 18, fontWeight: 800, letterSpacing: 5, color: C.muted }}>
-            HIGHLIGHT OF THE WEEK
-          </div>
-          {m.headline ? (
-            <div style={{ display: "flex", flexDirection: "column", marginTop: 10 }}>
-              <div style={{ display: "flex", fontFamily: "Anton", fontSize: 66, lineHeight: 0.94, color: C.ink }}>
-                {m.headline.manager}
-              </div>
-              <div style={{ display: "flex", fontFamily: "Anton", fontSize: 66, lineHeight: 0.94, color: C.pink }}>
-                {m.headline.line}.
-              </div>
-              <div style={{ display: "flex", fontFamily: "Anton", fontSize: 26, color: C.lime, marginTop: 16 }}>
-                {m.headline.points} PTS — MANAGER OF THE WEEK
-              </div>
+      {m.heroes.length > 0 ? (
+        <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 48 }}>
+          {m.heroes.map((h) => (
+            <div key={h.competition} style={{ display: "flex", flex: 1 }}>
+              <HeroBlock hero={h} nameSize={56} />
             </div>
-          ) : (
-            <div style={{ display: "flex", fontFamily: "Anton", fontSize: 52, marginTop: 10, color: C.ink }}>
-              Highlights land after GW1
-            </div>
-          )}
+          ))}
         </div>
-
-        {m.podium.length > 0 && (
-          <div style={{ display: "flex", flex: 1 }}>
-            <Podium podium={m.podium} />
-          </div>
-        )}
-      </div>
+      ) : (
+        <div style={{ display: "flex", flex: 1, alignItems: "center", fontFamily: "Anton", fontSize: 52, color: C.ink }}>
+          Highlights land after GW1
+        </div>
+      )}
 
       <div style={{ display: "flex", alignItems: "center", fontSize: 20, color: C.muted }}>
         <span style={{ color: C.soft, fontWeight: 700 }}>peproulette.vercel.app</span>
