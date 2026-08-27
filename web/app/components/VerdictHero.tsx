@@ -1,4 +1,5 @@
 import type { verdict } from "@/lib/story";
+import { ShareHighlight } from "./ShareHighlight";
 
 export function VerdictHero({
   v,
@@ -17,8 +18,11 @@ export function VerdictHero({
 
   return (
     <section className="py-6">
-      <div className="font-display text-[13px] tracking-[0.22em] text-[--lime]">
-        GAMEWEEK {gameweek} · THE VERDICT
+      <div className="flex items-start justify-between gap-3">
+        <div className="font-display text-[13px] tracking-[0.22em] text-[--lime]">
+          GAMEWEEK {gameweek} · THE VERDICT
+        </div>
+        <ShareHighlight gameweek={gameweek} />
       </div>
       <h1 className="font-display mt-2 text-[40px] leading-[0.9] uppercase sm:text-[60px]">
         <span>{v.manager} </span>
