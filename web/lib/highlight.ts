@@ -13,6 +13,20 @@ export type HighlightModel = {
   tiles: HighlightTile[];
 };
 
+/** Stat dimensions the tiles draw from, in priority order. Labels are
+ * emoji-free (Satori has no emoji font). `positive` requires a score above zero
+ * (skips not-yet-earned awards); `sign` prefixes the value with "+". */
+const TILE_POOL: { label: string; key: string; positive?: boolean; sign?: boolean }[] = [
+  { label: "Top score", key: "highest_gw_score" },
+  { label: "Biggest climber", key: "shooting_stars", positive: true, sign: true },
+  { label: "Penalty king", key: "penalty_king", positive: true },
+  { label: "Golden boot", key: "golden_boot", positive: true },
+  { label: "Playmaker", key: "playmaker", positive: true },
+  { label: "Golden glove", key: "golden_glove", positive: true },
+  { label: "Bench king", key: "bench_king", positive: true },
+  { label: "Dream team", key: "dream_team", positive: true },
+];
+
 function managerOf(row: SheetRow): string {
   return String(row.Manager ?? "");
 }
@@ -50,35 +64,31 @@ export function highlightModel(data: DashboardData): HighlightModel {
     points: toNum(row.Total),
   }));
 
+  // Fill up to four stat tiles from the pool below, each with a DISTINCT
+  // manager: skip the headline manager (already the hero) and anyone already
+  // shown in an earlier tile. This keeps the card full and varied while never
+  // repeating a name — and there is deliberately no "Leader" tile, since the
+  // gold podium row #1 already is the standings leader.
+  const seen = new Set<string>();
+  if (v?.manager) seen.add(v.manager);
+
   const tiles: HighlightTile[] = [];
-
-  if (standings.length > 0) {
+  for (const a of TILE_POOL) {
+    if (tiles.length >= 4) break;
+    const leader = awardLeader(data, a.key, a.positive ?? false);
+    if (!leader || seen.has(leader.manager)) continue;
+    seen.add(leader.manager);
     tiles.push({
-      label: "Leader",
-      name: managerOf(standings[0]),
-      value: `${toNum(standings[0].Total)}`,
+      label: a.label,
+      name: leader.manager,
+      value: a.sign ? `+${leader.score}` : `${leader.score}`,
     });
-  }
-
-  const topScore = awardLeader(data, "highest_gw_score");
-  if (topScore) {
-    tiles.push({ label: "Top score", name: topScore.manager, value: `${topScore.score}` });
-  }
-
-  const climber = awardLeader(data, "shooting_stars", true);
-  if (climber) {
-    tiles.push({ label: "Biggest climber", name: climber.manager, value: `+${climber.score}` });
-  }
-
-  const penalty = awardLeader(data, "penalty_king", true);
-  if (penalty) {
-    tiles.push({ label: "Penalty king", name: penalty.manager, value: `${penalty.score}` });
   }
 
   return {
     gameweek: data.meta.lastFinishedGw,
     headline: v ? { manager: v.manager, line: v.line, points: v.points } : null,
     podium,
-    tiles: tiles.slice(0, 4),
+    tiles,
   };
 }

@@ -185,11 +185,13 @@ export function PortraitCard({ m, logoSrc }: { m: HighlightModel; logoSrc: strin
       </div>
 
       {m.headline ? (
-        <div style={{ display: "flex", flexDirection: "column", marginTop: 10 }}>
-          <div style={{ display: "flex", fontFamily: "Anton", fontSize: 104, lineHeight: 0.92, color: C.ink }}>
+        // marginTop clears the tall Anton cap-height so the name never rides up
+        // into the kicker above; 96/0.96 keeps the two lines tightly stacked.
+        <div style={{ display: "flex", flexDirection: "column", marginTop: 32 }}>
+          <div style={{ display: "flex", fontFamily: "Anton", fontSize: 96, lineHeight: 0.96, color: C.ink }}>
             {m.headline.manager}
           </div>
-          <div style={{ display: "flex", fontFamily: "Anton", fontSize: 104, lineHeight: 0.92, color: C.pink }}>
+          <div style={{ display: "flex", fontFamily: "Anton", fontSize: 96, lineHeight: 0.96, color: C.pink }}>
             {m.headline.line}.
           </div>
           <div style={{ display: "flex", fontFamily: "Anton", fontSize: 34, color: C.lime, marginTop: 18 }}>
