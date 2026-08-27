@@ -1,3 +1,4 @@
+import { isMonthComplete, monthlySheets } from "./monthly";
 import { talkingPoints, type TalkingPoint } from "./story";
 import { toNum } from "./transforms";
 import { getSheet, type DashboardData, type SheetRow } from "./types";
@@ -8,11 +9,24 @@ export type Hero = { competition: string; manager: string; points: number };
 /** One talking-point tile: a labelled callout about a manager. */
 export type HighlightTile = { label: string; name: string; detail: string };
 
+/** Manager-of-the-Month standing for one competition. When the month is
+ * finalized, `leaders` holds just the winner; while it's still running it holds
+ * the top 3 chasing the lead. */
+export type MonthHighlight = {
+  competition: string;
+  month: string;
+  final: boolean;
+  leaders: { manager: string; points: number }[];
+};
+
 export type HighlightModel = {
   gameweek: number;
   /** The main highlights: Classic MotW first, then Challenge MotW. Each present
    * only when its weekly log has data. */
   heroes: Hero[];
+  /** Manager of the Month: Classic first, then H2H. Each present only when the
+   * competition has a monthly sheet. */
+  months: MonthHighlight[];
   /** Auto-derived talking points of the week (from story.talkingPoints), minus
    * any that just restate a hero. */
   tiles: HighlightTile[];
@@ -64,6 +78,25 @@ function latestWeeklyWinner(data: DashboardData, sheet: string): { manager: stri
   return { manager: managerOf(best), points: toNum(best.Score) };
 }
 
+/** Manager of the Month for one competition, from its latest monthly sheet
+ * (classic_monthly_* / h2h_monthly_*, already sorted with the leader first).
+ * If the month is finalized, returns just the winner; otherwise the top 3
+ * chasing the lead. Null when the competition has no monthly sheet yet. */
+function monthHighlight(data: DashboardData, prefix: string, competition: string): MonthHighlight | null {
+  const sheets = monthlySheets(data, prefix);
+  if (sheets.length === 0) return null;
+  const current = sheets[0]; // latest month first
+  if (current.rows.length === 0) return null;
+
+  const final = isMonthComplete(current.label, data.meta.lastFinishedGw);
+  const rows = final ? current.rows.slice(0, 1) : current.rows.slice(0, 3);
+  const leaders = rows.map((r) => {
+    const scoreKey = Object.keys(r)[3]; // Standings, Team, Manager, <monthly points>
+    return { manager: managerOf(r), points: scoreKey ? toNum(r[scoreKey]) : 0 };
+  });
+  return { competition, month: current.label, final, leaders };
+}
+
 /** Talking-point detail strings are authored for the DOM, where ▲/× render
  * fine; Satori (the image renderer) has no glyphs for them, so swap in ASCII. */
 function sanitizeDetail(detail: string): string {
@@ -83,6 +116,12 @@ export function highlightModel(data: DashboardData): HighlightModel {
   const heroes: Hero[] = [];
   if (classic) heroes.push({ competition: "Classic", ...classic });
   if (challenge) heroes.push({ competition: "Challenge", ...challenge });
+
+  const months: MonthHighlight[] = [];
+  const classicMonth = monthHighlight(data, "classic_monthly_", "Classic");
+  const h2hMonth = monthHighlight(data, "h2h_monthly_", "H2H");
+  if (classicMonth) months.push(classicMonth);
+  if (h2hMonth) months.push(h2hMonth);
 
   // No manager appears twice: seed with the heroes, then add talking points for
   // anyone not already shown.
@@ -115,5 +154,5 @@ export function highlightModel(data: DashboardData): HighlightModel {
     tiles.push({ label: a.label, name: leader.manager, detail: `${leader.score} ${a.unit}` });
   }
 
-  return { gameweek: data.meta.lastFinishedGw, heroes, tiles };
+  return { gameweek: data.meta.lastFinishedGw, heroes, months, tiles };
 }

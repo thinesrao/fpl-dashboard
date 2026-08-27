@@ -90,9 +90,70 @@ test("falls back to just the Classic hero when there's no Challenge log", () => 
   expect(m.heroes).toEqual([{ competition: "Classic", manager: "Solo", points: 55 }]);
 });
 
+test("Manager of the Month: top-3 race for the latest month while it's ongoing", () => {
+  const d: DashboardData = {
+    sheets: {
+      weekly_manager_log: [{ Gameweek: 5, Team: "", Manager: "MotW", Score: 60 }],
+      classic_monthly_august: [{ Standings: 1, Team: "A", Manager: "Danish Aziz", "Total Monthly Points": 250 }],
+      classic_monthly_september: [
+        { Standings: 1, Team: "A", Manager: "Danish Aziz", "Total Monthly Points": 120 },
+        { Standings: 2, Team: "B", Manager: "Faiz Rahman", "Total Monthly Points": 112 },
+        { Standings: 3, Team: "C", Manager: "Wei Jie", "Total Monthly Points": 108 },
+        { Standings: 4, Team: "D", Manager: "Off Podium", "Total Monthly Points": 90 },
+      ],
+      h2h_monthly_september: [
+        { Standings: 1, Team: "D", Manager: "Matthew Mohan", "Total_Head_to_Head_FPL_Point": 9 },
+        { Standings: 2, Team: "E", Manager: "Suria Devi", "Total_Head_to_Head_FPL_Point": 7 },
+        { Standings: 3, Team: "F", Manager: "Adam Lee", "Total_Head_to_Head_FPL_Point": 6 },
+      ],
+    },
+    meta: { lastFinishedGw: 5, lastUpdatedUtc: "" }, // September (ends GW6) still running
+  };
+  const m = highlightModel(d);
+  expect(m.months).toEqual([
+    {
+      competition: "Classic",
+      month: "September",
+      final: false,
+      leaders: [
+        { manager: "Danish Aziz", points: 120 },
+        { manager: "Faiz Rahman", points: 112 },
+        { manager: "Wei Jie", points: 108 },
+      ],
+    },
+    {
+      competition: "H2H",
+      month: "September",
+      final: false,
+      leaders: [
+        { manager: "Matthew Mohan", points: 9 },
+        { manager: "Suria Devi", points: 7 },
+        { manager: "Adam Lee", points: 6 },
+      ],
+    },
+  ]);
+});
+
+test("Manager of the Month shows just the winner once the month is finalized", () => {
+  const d: DashboardData = {
+    sheets: {
+      classic_monthly_august: [
+        { Standings: 1, Team: "A", Manager: "Danish Aziz", "Total Monthly Points": 250 },
+        { Standings: 2, Team: "B", Manager: "Faiz Rahman", "Total Monthly Points": 230 },
+      ],
+    },
+    meta: { lastFinishedGw: 3, lastUpdatedUtc: "" }, // August ends GW3 → finalized
+  };
+  const m = highlightModel(d);
+  expect(m.months).toEqual([
+    { competition: "Classic", month: "August", final: true, leaders: [{ manager: "Danish Aziz", points: 250 }] },
+  ]);
+});
+
 test("no heroes or tiles before any gameweek data exists", () => {
   const empty: DashboardData = { sheets: {}, meta: { lastFinishedGw: 0, lastUpdatedUtc: "" } };
   const m = highlightModel(empty);
   expect(m.heroes).toEqual([]);
+  expect(m.months).toEqual([]);
   expect(m.tiles).toEqual([]);
 });
