@@ -26,12 +26,17 @@ function gameweekOf(row: SheetRow): number {
 
 /** Manager of the Week / FPL Challenge weekly logs share the same shape:
  * Gameweek, Team, Manager, Score. We keep the full history — one card per
- * gameweek — sorted newest-first, and flag the latest gameweek's card so it can
- * be accented. */
-function weeklyLogCards(rows: SheetRow[], labelFor: (row: SheetRow) => string): HofCard[] {
-  if (rows.length === 0) return [];
-  const maxGw = Math.max(...rows.map(gameweekOf));
-  return [...rows]
+ * FINISHED gameweek — sorted newest-first, and flag the latest as New.
+ * Gameweeks beyond last_finished_gw (an in-progress week published by a manual
+ * pipeline run) are excluded so we never show a partial week as a final result. */
+function weeklyLogCards(rows: SheetRow[], lastFinishedGw: number, labelFor: (row: SheetRow) => string): HofCard[] {
+  const finished = rows.filter((row) => {
+    const gw = gameweekOf(row);
+    return gw >= 1 && gw <= lastFinishedGw;
+  });
+  if (finished.length === 0) return [];
+  const maxGw = Math.max(...finished.map(gameweekOf));
+  return [...finished]
     .sort((a, b) => gameweekOf(b) - gameweekOf(a))
     .map((row) => {
       const label = labelFor(row);
@@ -113,8 +118,8 @@ function HofPlaceholder() {
 
 export function HallOfFame({ data }: { data: DashboardData }) {
   const cards: HofCard[] = [
-    ...weeklyLogCards(getSheet(data, "weekly_manager_log"), (row) => `Classic GW${row.Gameweek ?? ""}`),
-    ...weeklyLogCards(getSheet(data, "fpl_challenge_weekly_log"), (row) => `Challenge GW${row.Gameweek ?? ""}`),
+    ...weeklyLogCards(getSheet(data, "weekly_manager_log"), data.meta.lastFinishedGw, (row) => `Classic GW${row.Gameweek ?? ""}`),
+    ...weeklyLogCards(getSheet(data, "fpl_challenge_weekly_log"), data.meta.lastFinishedGw, (row) => `Challenge GW${row.Gameweek ?? ""}`),
     ...monthlyCards(data, "classic_monthly_", "Classic"),
     ...monthlyCards(data, "h2h_monthly_", "H2H"),
   ];
