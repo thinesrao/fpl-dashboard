@@ -62,19 +62,23 @@ function awardLeader(data: DashboardData, key: string): { manager: string; score
 }
 
 /** Manager of the Week for a weekly log (Gameweek, Team, Manager, Score): the
- * row with the highest Gameweek, falling back to the last row. Null if empty. */
+ * highest FINISHED gameweek's winner. We cap at last_finished_gw so a manual
+ * mid-gameweek pipeline run can't surface an in-progress week's partial leader
+ * as the Manager of the Week. Null when no finished gameweek is present. */
 function latestWeeklyWinner(data: DashboardData, sheet: string): { manager: string; points: number } | null {
   const log = getSheet(data, sheet);
   if (log.length === 0) return null;
-  let best = log[0];
+  const cap = data.meta.lastFinishedGw;
+  let best: SheetRow | null = null;
   let maxGw = -Infinity;
   for (const row of log) {
     const gw = toNum(row.Gameweek);
-    if (gw >= maxGw) {
+    if (gw >= 1 && gw <= cap && gw >= maxGw) {
       maxGw = gw;
       best = row;
     }
   }
+  if (!best) return null;
   return { manager: managerOf(best), points: toNum(best.Score) };
 }
 

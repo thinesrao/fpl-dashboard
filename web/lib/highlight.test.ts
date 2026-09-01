@@ -25,6 +25,23 @@ test("the two heroes are the Classic and Challenge Managers of the Week", () => 
   ]);
 });
 
+test("Manager of the Week ignores in-progress gameweeks beyond last_finished_gw", () => {
+  // A manual mid-GW2 pipeline run can publish a GW2 row while GW2 isn't final;
+  // last_finished_gw stays 1, so the hero must remain GW1's winner.
+  const d: DashboardData = {
+    sheets: {
+      weekly_manager_log: [
+        { Gameweek: 1, Team: "A", Manager: "Woon Kun Shum", Score: 67 },
+        { Gameweek: 2, Team: "B", Manager: "arai oh arai", Score: 119 }, // in progress
+      ],
+    },
+    meta: { lastFinishedGw: 1, lastUpdatedUtc: "" },
+  };
+  const m = highlightModel(d);
+  expect(m.gameweek).toBe(1);
+  expect(m.heroes).toEqual([{ competition: "Classic", manager: "Woon Kun Shum", points: 67 }]);
+});
+
 test("tiles are the week's talking points, sanitized and de-duped against heroes", () => {
   const m = highlightModel(data);
   // "Highest score" is Danish Aziz — already the Classic hero — so it's dropped.

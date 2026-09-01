@@ -46,6 +46,24 @@ test("keeps the full weekly history, newest first, and flags the latest as New",
   expect(screen.getAllByText("New")).toHaveLength(1);
 });
 
+test("excludes weekly cards for gameweeks not yet finished", () => {
+  // GW2 row present (from a manual mid-week run) but last_finished_gw is 1.
+  const inProgress: DashboardData = {
+    sheets: {
+      weekly_manager_log: [
+        { Gameweek: 1, Team: "A", Manager: "Woon Kun Shum", Score: 67 },
+        { Gameweek: 2, Team: "B", Manager: "arai oh arai", Score: 119 },
+      ],
+    },
+    meta: { lastFinishedGw: 1, lastUpdatedUtc: "" },
+  };
+  render(<HallOfFame data={inProgress} />);
+
+  expect(screen.getByText("Classic GW1")).toBeInTheDocument();
+  expect(screen.queryByText("Classic GW2")).not.toBeInTheDocument();
+  expect(screen.queryByText("arai oh arai")).not.toBeInTheDocument();
+});
+
 test("marks a still-running month as provisional (So far / Leading)", () => {
   // August ends at GW3; lastFinishedGw 1 means it's still in progress.
   render(<HallOfFame data={data} />);
