@@ -27,7 +27,7 @@ test("renders the GW1 Manager of the Week card and a monthly card", () => {
   expect(screen.getByText("August (Classic)")).toBeInTheDocument();
 });
 
-test("shows only the latest gameweek's weekly card, not every past week", () => {
+test("keeps the full weekly history, newest first, and flags the latest as New", () => {
   const multi: DashboardData = {
     sheets: {
       weekly_manager_log: [
@@ -39,10 +39,11 @@ test("shows only the latest gameweek's weekly card, not every past week", () => 
   };
   render(<HallOfFame data={multi} />);
 
-  expect(screen.getByText("Classic GW2")).toBeInTheDocument();
-  expect(screen.getByText("Danish Aziz")).toBeInTheDocument();
-  expect(screen.queryByText("Classic GW1")).not.toBeInTheDocument();
-  expect(screen.queryByText("Matthew Mohan")).not.toBeInTheDocument();
+  // Both weeks shown, GW2 (latest) before GW1.
+  const labels = Array.from(document.querySelectorAll(".font-display.text-xs")).map((el) => el.textContent);
+  expect(labels).toEqual(["Classic GW2", "Classic GW1"]);
+  // Exactly one "New" flag, on the latest card.
+  expect(screen.getAllByText("New")).toHaveLength(1);
 });
 
 test("marks a still-running month as provisional (So far / Leading)", () => {
