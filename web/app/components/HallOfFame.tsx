@@ -10,18 +10,27 @@ function managerOf(row: SheetRow): string {
   return typeof v === "string" ? v : v == null ? "" : String(v);
 }
 
+function gameweekOf(row: SheetRow): number {
+  const n = Number(row.Gameweek);
+  return Number.isFinite(n) ? n : -Infinity;
+}
+
 /** Manager of the Week / FPL Challenge weekly logs share the same shape:
- * Gameweek, Team, Manager, Score. */
+ * Gameweek, Team, Manager, Score. We surface only the LATEST gameweek's card
+ * (the row with the highest Gameweek, falling back to the last row), so the
+ * Hall of Fame doesn't accumulate a card for every past week. */
 function weeklyLogCards(rows: SheetRow[], labelFor: (row: SheetRow) => string): HofCard[] {
-  return rows.map((row, i) => {
-    const label = labelFor(row);
-    return {
-      key: `${label}-${i}`,
+  if (rows.length === 0) return [];
+  const latest = rows.reduce((best, row) => (gameweekOf(row) >= gameweekOf(best) ? row : best), rows[0]);
+  const label = labelFor(latest);
+  return [
+    {
+      key: label,
       label,
-      winner: managerOf(row) || "—",
-      score: String(row.Score ?? ""),
-    };
-  });
+      winner: managerOf(latest) || "—",
+      score: String(latest.Score ?? ""),
+    },
+  ];
 }
 
 /** Monthly sheets (classic_monthly_*, h2h_monthly_*) are already sorted with
