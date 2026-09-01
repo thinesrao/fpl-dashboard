@@ -3,7 +3,16 @@ import type { DashboardData, SheetRow } from "@/lib/types";
 import { getSheet } from "@/lib/types";
 import { monthlySheets, isMonthComplete } from "@/lib/monthly";
 
-type HofCard = { key: string; label: string; winner: string; score: string; provisional?: boolean };
+type HofCard = {
+  key: string;
+  label: string;
+  winner: string;
+  score: string;
+  provisional?: boolean;
+  /** The newest card in its group (latest gameweek / latest month) — accented
+   * so the freshest result stands out from the history. */
+  highlight?: boolean;
+};
 
 function managerOf(row: SheetRow): string {
   const v = row.Manager;
@@ -16,21 +25,24 @@ function gameweekOf(row: SheetRow): number {
 }
 
 /** Manager of the Week / FPL Challenge weekly logs share the same shape:
- * Gameweek, Team, Manager, Score. We surface only the LATEST gameweek's card
- * (the row with the highest Gameweek, falling back to the last row), so the
- * Hall of Fame doesn't accumulate a card for every past week. */
+ * Gameweek, Team, Manager, Score. We keep the full history — one card per
+ * gameweek — sorted newest-first, and flag the latest gameweek's card so it can
+ * be accented. */
 function weeklyLogCards(rows: SheetRow[], labelFor: (row: SheetRow) => string): HofCard[] {
   if (rows.length === 0) return [];
-  const latest = rows.reduce((best, row) => (gameweekOf(row) >= gameweekOf(best) ? row : best), rows[0]);
-  const label = labelFor(latest);
-  return [
-    {
-      key: label,
-      label,
-      winner: managerOf(latest) || "—",
-      score: String(latest.Score ?? ""),
-    },
-  ];
+  const maxGw = Math.max(...rows.map(gameweekOf));
+  return [...rows]
+    .sort((a, b) => gameweekOf(b) - gameweekOf(a))
+    .map((row) => {
+      const label = labelFor(row);
+      return {
+        key: label,
+        label,
+        winner: managerOf(row) || "—",
+        score: String(row.Score ?? ""),
+        highlight: gameweekOf(row) === maxGw,
+      };
+    });
 }
 
 /** Monthly sheets (classic_monthly_*, h2h_monthly_*) are already sorted with
@@ -42,7 +54,8 @@ function weeklyLogCards(rows: SheetRow[], labelFor: (row: SheetRow) => string): 
  * table" rather than guessing. */
 function monthlyCards(data: DashboardData, prefix: string, tag: string): HofCard[] {
   const lastFinishedGw = data.meta.lastFinishedGw;
-  return monthlySheets(data, prefix).map((m) => {
+  // monthlySheets is sorted latest month first, so index 0 is the newest.
+  return monthlySheets(data, prefix).map((m, idx) => {
     const row0 = m.rows[0];
     const manager = row0 ? managerOf(row0) : "";
     const confident = manager.trim().length > 0;
@@ -53,20 +66,31 @@ function monthlyCards(data: DashboardData, prefix: string, tag: string): HofCard
       winner: confident ? manager : "—",
       score: confident && scoreKey ? String(row0?.[scoreKey] ?? "") : "see table",
       provisional: !isMonthComplete(m.label, lastFinishedGw),
+      highlight: idx === 0,
     };
   });
 }
 
 function HofCardView({ card }: { card: HofCard }) {
+  // Border/tint: ongoing month = gold; newest finalized card = lime; else muted.
+  const accent = card.provisional
+    ? "border-[rgba(255,210,63,0.5)] bg-[rgba(255,210,63,0.06)]"
+    : card.highlight
+      ? "border-[--lime] bg-[rgba(198,255,0,0.06)]"
+      : "border-[--line] bg-[--panel]";
   return (
-    <div className="flex flex-col justify-between rounded-2xl border border-[--line] bg-[--panel] px-3.5 py-3">
+    <div className={"flex flex-col justify-between rounded-2xl border px-3.5 py-3 " + accent}>
       <div className="flex items-center justify-between gap-2">
         <span className="font-display text-xs text-[--muted]">{card.label}</span>
-        {card.provisional && (
+        {card.provisional ? (
           <span className="rounded-full border border-[rgba(255,210,63,0.4)] bg-[rgba(255,210,63,0.12)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[--gold]">
             So far
           </span>
-        )}
+        ) : card.highlight ? (
+          <span className="rounded-full border border-[rgba(198,255,0,0.4)] bg-[rgba(198,255,0,0.14)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[--lime]">
+            New
+          </span>
+        ) : null}
       </div>
       {card.provisional && (
         <div className="mt-1 text-[10px] uppercase tracking-wide text-[--muted]">Leading</div>
