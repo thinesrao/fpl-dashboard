@@ -616,8 +616,13 @@ def main():
             h2h_totals_end_of_month = h2h_history_df[h2h_history_df['gameweek'] == last_gw_of_month][['manager_id', 'total_h2h_points']]
             
             # FIXED: Calculate monthly H2H points from actual match results instead of standings differences
-            # This works around the issue where H2H standings don't update in the FPL API
-            monthly_matches = h2h_matches_df[h2h_matches_df['event'].isin(gws_in_month)]
+            # This works around the issue where H2H standings don't update in the FPL API.
+            # Only count gameweeks that have actually been played: unplayed fixtures
+            # come back 0-0 from the FPL API, which would otherwise be scored as a
+            # draw (+1 to both managers) and inflate every monthly total. Same guard
+            # the Bad Luck H2H calc above uses.
+            played_gws_in_month = [gw for gw in gws_in_month if gw <= last_finished_gw]
+            monthly_matches = h2h_matches_df[h2h_matches_df['event'].isin(played_gws_in_month)]
             
             # Calculate monthly H2H points from match results
             monthly_h2h_points = {}
