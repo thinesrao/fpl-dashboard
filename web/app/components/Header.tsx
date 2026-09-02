@@ -1,11 +1,15 @@
 import Link from "next/link";
 
 function formatUpdated(iso: string): string {
-  const d = new Date(iso);
+  // The pipeline writes a UTC timestamp that may lack a 'Z' suffix. Treat a
+  // bare (offset-less) value as UTC so the conversion to MYT is correct
+  // regardless of the runtime's own timezone.
+  const hasTz = /[zZ]$|[+-]\d\d:?\d\d$/.test(iso);
+  const d = new Date(hasTz ? iso : `${iso}Z`);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString("en-GB", {
     day: "2-digit", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit", timeZone: "UTC",
+    hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kuala_Lumpur",
   });
 }
 
@@ -20,7 +24,7 @@ export function Header({ gameweek, lastUpdated }: { gameweek: number; lastUpdate
         </div>
         <div className="flex-1" />
         <div className="text-xs text-[--muted]">
-          <b className="text-[--ink]">Gameweek {gameweek}</b> · updated {formatUpdated(lastUpdated)} (UTC)
+          <b className="text-[--ink]">Gameweek {gameweek}</b> · updated {formatUpdated(lastUpdated)} (MYT)
         </div>
         <Link href="/admin/login" className="text-xs text-[--muted] hover:text-[--ink]">
           Admin

@@ -11,9 +11,14 @@ test("renders brand wordmark, logo, gameweek and formatted last-updated", () => 
   expect(screen.getByRole("link", { name: /admin/i })).toHaveAttribute("href", "/admin/login");
 });
 
-test("formats last-updated in UTC regardless of local timezone", () => {
-  // 10:30 UTC should render as 10:30 even if the test env runs in a
-  // non-UTC timezone; this would fail if formatUpdated used local time.
+test("formats last-updated in Malaysia time (MYT, UTC+8)", () => {
+  // 10:30 UTC → 18:30 MYT, regardless of the test env's own timezone.
   render(<Header gameweek={3} lastUpdated="2026-08-25T10:30:00+00:00" />);
-  expect(screen.getByText(/10:30/)).toBeInTheDocument();
+  expect(screen.getByText(/18:30 \(MYT\)/)).toBeInTheDocument();
+});
+
+test("treats a bare (offset-less) UTC timestamp as UTC before converting to MYT", () => {
+  // The pipeline emits naive UTC like this (no 'Z'); it must still map to 18:30 MYT.
+  render(<Header gameweek={3} lastUpdated="2026-08-25T10:30:00.123456" />);
+  expect(screen.getByText(/18:30 \(MYT\)/)).toBeInTheDocument();
 });
