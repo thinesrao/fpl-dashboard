@@ -108,6 +108,29 @@ test("orders cards Classic GW, Challenge GW, then monthlies", () => {
   ]);
 });
 
+test("splits Manager of the Month into Finished and Live sections", () => {
+  // August done (lastFinishedGw 4 >= 2), September still running (4 < 5).
+  const data: DashboardData = {
+    sheets: {
+      classic_monthly_august: [
+        { Standings: 1, Team: "A", Manager: "Danish Aziz", "Total Monthly Points": 250, GW1: 85 },
+      ],
+      classic_monthly_september: [
+        { Standings: 1, Team: "B", Manager: "Faiz Rahman", "Total Monthly Points": 120, GW3: 60 },
+      ],
+    },
+    meta: { lastFinishedGw: 4, lastUpdatedUtc: "", monthLastGw: { August: 2, September: 5 } },
+  };
+  render(<HallOfFame data={data} />);
+
+  expect(screen.getByText(/Manager of the Month · Finished/i)).toBeInTheDocument();
+  expect(screen.getByText(/Manager of the Month · Live/i)).toBeInTheDocument();
+  expect(screen.getByText("August (Classic)")).toBeInTheDocument();
+  expect(screen.getByText("September (Classic)")).toBeInTheDocument();
+  // The running month shows the provisional treatment.
+  expect(screen.getByText("So far")).toBeInTheDocument();
+});
+
 test("renders a soon placeholder card and does not crash on empty data", () => {
   const empty: DashboardData = { sheets: {}, meta: { lastFinishedGw: 0, lastUpdatedUtc: "" } };
   render(<HallOfFame data={empty} />);

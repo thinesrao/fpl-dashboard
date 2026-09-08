@@ -70,7 +70,7 @@ function monthlyCards(data: DashboardData, prefix: string, tag: string): HofCard
       label: `${m.label} (${tag})`,
       winner: confident ? manager : "—",
       score: confident && scoreKey ? String(row0?.[scoreKey] ?? "") : "see table",
-      provisional: !isMonthComplete(m.label, lastFinishedGw),
+      provisional: !isMonthComplete(m.label, lastFinishedGw, data.meta.monthLastGw),
       highlight: idx === 0,
     };
   });
@@ -116,26 +116,49 @@ function HofPlaceholder() {
   );
 }
 
+function Section({ title, cards }: { title: string; cards: HofCard[] }) {
+  if (cards.length === 0) return null;
+  return (
+    <div>
+      <h3 className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[--muted]">{title}</h3>
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+        {cards.map((c) => <HofCardView key={c.key} card={c} />)}
+      </div>
+    </div>
+  );
+}
+
 export function HallOfFame({ data }: { data: DashboardData }) {
-  const cards: HofCard[] = [
+  const weekly: HofCard[] = [
     ...weeklyLogCards(getSheet(data, "weekly_manager_log"), data.meta.lastFinishedGw, (row) => `Classic GW${row.Gameweek ?? ""}`),
     ...weeklyLogCards(getSheet(data, "fpl_challenge_weekly_log"), data.meta.lastFinishedGw, (row) => `Challenge GW${row.Gameweek ?? ""}`),
+  ];
+  const months: HofCard[] = [
     ...monthlyCards(data, "classic_monthly_", "Classic"),
     ...monthlyCards(data, "h2h_monthly_", "H2H"),
   ];
+  // Segregate the month cards so the still-running race and the settled winners
+  // each get their own clean row instead of clumping together.
+  const monthsLive = months.filter((c) => c.provisional);
+  const monthsDone = months.filter((c) => !c.provisional);
+  const empty = weekly.length === 0 && months.length === 0;
 
   return (
     <div>
       <h2 className="font-display mb-4 text-[13px] uppercase tracking-[0.2em] text-[--muted]">
         Hall of Fame
       </h2>
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-        {cards.length === 0 ? (
+      {empty ? (
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
           <HofPlaceholder />
-        ) : (
-          cards.map((c) => <HofCardView key={c.key} card={c} />)
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          <Section title="Managers of the Week" cards={weekly} />
+          <Section title="Manager of the Month · Live" cards={monthsLive} />
+          <Section title="Manager of the Month · Finished" cards={monthsDone} />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import type { HighlightModel, Hero, MonthHighlight } from "./highlight";
+import type { ResultsStatus } from "./results-status";
 
 // Shared building blocks for the gameweek-highlight image, rendered by Satori
 // (next/og) in two compositions: a 1080×1350 portrait for the share/download
@@ -52,7 +53,28 @@ export async function loadHighlightAssets() {
   return { fonts, logoSrc };
 }
 
-function BrandRow({ logoSrc, gameweek }: { logoSrc: string; gameweek: number }) {
+function StatusChip({ status }: { status: ResultsStatus }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        fontSize: 20,
+        fontWeight: 800,
+        letterSpacing: 1,
+        color: status.final ? "#0b0912" : C.gold,
+        background: status.final ? C.lime : "rgba(255,210,63,0.14)",
+        border: `2px solid ${status.final ? C.lime : "rgba(255,210,63,0.55)"}`,
+        borderRadius: 999,
+        padding: "6px 16px",
+      }}
+    >
+      {status.final ? "FINAL" : "PROVISIONAL"}
+    </div>
+  );
+}
+
+function BrandRow({ logoSrc, gameweek, status }: { logoSrc: string; gameweek: number; status?: ResultsStatus }) {
   return (
     <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
       <img src={logoSrc} width={57} height={72} style={{ marginRight: 20 }} alt="" />
@@ -60,7 +82,8 @@ function BrandRow({ logoSrc, gameweek }: { logoSrc: string; gameweek: number }) 
         <span style={{ color: C.ink }}>PEP</span>
         <span style={{ color: C.pink }}>ROULETTE</span>
       </div>
-      <div style={{ display: "flex", marginLeft: "auto" }}>
+      <div style={{ display: "flex", marginLeft: "auto", alignItems: "center", gap: 12 }}>
+        {status && <StatusChip status={status} />}
         <div
           style={{
             display: "flex",
@@ -104,6 +127,8 @@ function HeroBlock({ hero, nameSize }: { hero: Hero; nameSize: number }) {
  * chasing the lead while the month is still running. */
 function MonthColumn({ mh }: { mh: MonthHighlight }) {
   const color = COMP_COLOR[mh.competition] ?? C.lime;
+  // A finished month is the actual winner — give it a gold frame + WINNER tag so
+  // it reads unmistakably as the result, not a mid-month leaderboard.
   return (
     <div
       style={{
@@ -112,12 +137,31 @@ function MonthColumn({ mh }: { mh: MonthHighlight }) {
         flex: 1,
         padding: "20px 22px",
         borderRadius: 20,
-        border: `2px solid ${C.line}`,
-        background: "rgba(255,255,255,0.03)",
+        border: `2px solid ${mh.final ? "rgba(255,210,63,0.55)" : C.line}`,
+        background: mh.final ? "rgba(255,210,63,0.07)" : "rgba(255,255,255,0.03)",
       }}
     >
-      <div style={{ display: "flex", fontSize: 18, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color }}>
-        {mh.competition} · {mh.month}
+      <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
+        <div style={{ display: "flex", fontSize: 18, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color }}>
+          {mh.competition} · {mh.month}
+        </div>
+        {mh.final && (
+          <div
+            style={{
+              display: "flex",
+              marginLeft: "auto",
+              fontSize: 13,
+              fontWeight: 800,
+              letterSpacing: 1,
+              color: "#0b0912",
+              background: C.gold,
+              borderRadius: 999,
+              padding: "3px 12px",
+            }}
+          >
+            WINNER
+          </div>
+        )}
       </div>
       <div style={{ display: "flex", fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: C.muted, marginTop: 4 }}>
         {mh.final ? "Manager of the Month" : "Leading the race"}
@@ -125,8 +169,8 @@ function MonthColumn({ mh }: { mh: MonthHighlight }) {
 
       {mh.final ? (
         <div style={{ display: "flex", flexDirection: "column", marginTop: 12 }}>
-          <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: C.ink }}>{mh.leaders[0]?.manager}</div>
-          <div style={{ display: "flex", fontFamily: "Fredoka", fontWeight: 700, fontSize: 32, color, marginTop: 4 }}>
+          <div style={{ display: "flex", fontSize: 34, fontWeight: 700, color: C.gold }}>{mh.leaders[0]?.manager}</div>
+          <div style={{ display: "flex", fontFamily: "Fredoka", fontWeight: 700, fontSize: 34, color: C.gold, marginTop: 4 }}>
             {mh.leaders[0]?.points} pts
           </div>
         </div>
@@ -208,7 +252,7 @@ export function PortraitCard({ m, logoSrc }: { m: HighlightModel; logoSrc: strin
         background: BG,
       }}
     >
-      <BrandRow logoSrc={logoSrc} gameweek={m.gameweek} />
+      <BrandRow logoSrc={logoSrc} gameweek={m.gameweek} status={m.status} />
 
       {/* Center the content group between the brand row and footer so the space
           is balanced rather than pooling in one big gap. */}
@@ -276,7 +320,7 @@ export function LandscapeCard({ m, logoSrc }: { m: HighlightModel; logoSrc: stri
         background: BG,
       }}
     >
-      <BrandRow logoSrc={logoSrc} gameweek={m.gameweek} />
+      <BrandRow logoSrc={logoSrc} gameweek={m.gameweek} status={m.status} />
 
       {m.heroes.length > 0 ? (
         <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 48 }}>

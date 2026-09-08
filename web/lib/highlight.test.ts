@@ -151,6 +151,24 @@ test("Manager of the Month: top-3 race for the latest month while it's ongoing",
   ]);
 });
 
+test("Manager of the Month is final by the live month_last_gw (August ends GW2)", () => {
+  // The hardcoded fallback says August ends GW3; the live map (GW2) must win, so
+  // August is the finished winner at GW2 this season.
+  const d: DashboardData = {
+    sheets: {
+      classic_monthly_august: [
+        { Standings: 1, Team: "A", Manager: "Danish Aziz", "Total Monthly Points": 195 },
+        { Standings: 2, Team: "B", Manager: "Faiz Rahman", "Total Monthly Points": 190 },
+      ],
+    },
+    meta: { lastFinishedGw: 2, lastUpdatedUtc: "", monthLastGw: { August: 2 } },
+  };
+  const m = highlightModel(d);
+  expect(m.months).toEqual([
+    { competition: "Classic", month: "August", final: true, leaders: [{ manager: "Danish Aziz", points: 195 }] },
+  ]);
+});
+
 test("Manager of the Month shows just the winner once the month is finalized", () => {
   const d: DashboardData = {
     sheets: {

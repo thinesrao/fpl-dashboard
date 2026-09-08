@@ -1,4 +1,5 @@
 import { isMonthComplete, monthlySheets } from "./monthly";
+import { resultsStatus, type ResultsStatus } from "./results-status";
 import { talkingPoints, type TalkingPoint } from "./story";
 import { toNum } from "./transforms";
 import { getSheet, type DashboardData, type SheetRow } from "./types";
@@ -30,6 +31,8 @@ export type HighlightModel = {
   /** Auto-derived talking points of the week (from story.talkingPoints), minus
    * any that just restate a hero. */
   tiles: HighlightTile[];
+  /** Whether the shown results are final or provisional (for the card badge). */
+  status: ResultsStatus;
 };
 
 /** Award sheets to backfill the tiles with once the genuine talking points run
@@ -92,7 +95,7 @@ function monthHighlight(data: DashboardData, prefix: string, competition: string
   const current = sheets[0]; // latest month first
   if (current.rows.length === 0) return null;
 
-  const final = isMonthComplete(current.label, data.meta.lastFinishedGw);
+  const final = isMonthComplete(current.label, data.meta.lastFinishedGw, data.meta.monthLastGw);
   const rows = final ? current.rows.slice(0, 1) : current.rows.slice(0, 3);
   const leaders = rows.map((r) => {
     const scoreKey = Object.keys(r)[3]; // Standings, Team, Manager, <monthly points>
@@ -158,5 +161,5 @@ export function highlightModel(data: DashboardData): HighlightModel {
     tiles.push({ label: a.label, name: leader.manager, detail: `${leader.score} ${a.unit}` });
   }
 
-  return { gameweek: data.meta.lastFinishedGw, heroes, months, tiles };
+  return { gameweek: data.meta.lastFinishedGw, heroes, months, tiles, status: resultsStatus(data.meta) };
 }

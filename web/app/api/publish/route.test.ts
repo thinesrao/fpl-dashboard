@@ -14,5 +14,9 @@ test("dispatchPipeline calls the correct GitHub workflow dispatch endpoint with 
   );
   const headers = calls[0].init.headers as Record<string, string>;
   expect(headers.Authorization).toBe("Bearer tok_123");
-  expect(JSON.parse(String(calls[0].init.body))).toEqual({ ref: "main" });
+  // Admin publish advances the penalty-review marker (see pipeline_meta.py).
+  expect(JSON.parse(String(calls[0].init.body))).toEqual({
+    ref: "main",
+    inputs: { penalties_reviewed: "true" },
+  });
 });
