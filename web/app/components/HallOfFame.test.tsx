@@ -18,10 +18,11 @@ const data: DashboardData = {
   meta: { lastFinishedGw: 1, lastUpdatedUtc: "" },
 };
 
-test("renders the GW1 Manager of the Week card and a monthly card", () => {
+test("renders the GW1 Manager of the Week card under a Classic column, and a monthly card", () => {
   render(<HallOfFame data={data} />);
 
-  expect(screen.getByText("Classic GW1")).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Classic" })).toBeInTheDocument();
+  expect(screen.getByText("GW1")).toBeInTheDocument();
   expect(screen.getAllByText("Matthew Mohan").length).toBeGreaterThan(0);
   expect(screen.getByText("85")).toBeInTheDocument();
   expect(screen.getByText("August (Classic)")).toBeInTheDocument();
@@ -39,9 +40,9 @@ test("keeps the full weekly history, newest first, and flags the latest as New",
   };
   render(<HallOfFame data={multi} />);
 
-  // Both weeks shown, GW2 (latest) before GW1.
+  // Both weeks shown in the Classic column, GW2 (latest) before GW1.
   const labels = Array.from(document.querySelectorAll(".font-display.text-xs")).map((el) => el.textContent);
-  expect(labels).toEqual(["Classic GW2", "Classic GW1"]);
+  expect(labels).toEqual(["GW2", "GW1"]);
   // Exactly one "New" flag, on the latest card.
   expect(screen.getAllByText("New")).toHaveLength(1);
 });
@@ -59,8 +60,8 @@ test("excludes weekly cards for gameweeks not yet finished", () => {
   };
   render(<HallOfFame data={inProgress} />);
 
-  expect(screen.getByText("Classic GW1")).toBeInTheDocument();
-  expect(screen.queryByText("Classic GW2")).not.toBeInTheDocument();
+  expect(screen.getByText("GW1")).toBeInTheDocument();
+  expect(screen.queryByText("GW2")).not.toBeInTheDocument();
   expect(screen.queryByText("arai oh arai")).not.toBeInTheDocument();
 });
 
@@ -81,7 +82,7 @@ test("does not mark a completed month as provisional", () => {
   expect(screen.queryByText("Leading")).not.toBeInTheDocument();
 });
 
-test("orders cards Classic GW, Challenge GW, then monthlies", () => {
+test("puts the Classic weekly column before the Challenge column, then monthlies", () => {
   const full: DashboardData = {
     sheets: {
       weekly_manager_log: [{ Gameweek: 1, Team: "A", Manager: "Matthew Mohan", Score: 85 }],
@@ -101,8 +102,8 @@ test("orders cards Classic GW, Challenge GW, then monthlies", () => {
     (el) => el.textContent
   );
   expect(labels).toEqual([
-    "Classic GW1",
-    "Challenge GW1",
+    "GW1", // Classic column
+    "GW1", // Challenge column
     "August (Classic)",
     "August (H2H)",
   ]);
