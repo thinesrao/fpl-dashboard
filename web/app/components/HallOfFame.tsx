@@ -128,11 +128,28 @@ function Section({ title, cards }: { title: string; cards: HofCard[] }) {
   );
 }
 
+/** One competition's Manager-of-the-Week column: newest gameweek at the top,
+ * descending. Empty until that competition logs a week. */
+function WeekColumn({ title, color, cards }: { title: string; color: string; cards: HofCard[] }) {
+  return (
+    <div className="flex flex-col gap-2.5">
+      <h4 className="text-[11px] font-bold uppercase tracking-wide" style={{ color }}>{title}</h4>
+      {cards.length > 0 ? (
+        cards.map((c) => <HofCardView key={c.key} card={c} />)
+      ) : (
+        <p className="rounded-2xl border border-[--line] bg-[--panel] px-3.5 py-3 text-xs text-[--muted]">
+          No entries yet
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function HallOfFame({ data }: { data: DashboardData }) {
-  const weekly: HofCard[] = [
-    ...weeklyLogCards(getSheet(data, "weekly_manager_log"), data.meta.lastFinishedGw, (row) => `Classic GW${row.Gameweek ?? ""}`),
-    ...weeklyLogCards(getSheet(data, "fpl_challenge_weekly_log"), data.meta.lastFinishedGw, (row) => `Challenge GW${row.Gameweek ?? ""}`),
-  ];
+  // Weekly cards, split by competition so each gets its own column. The label
+  // is just the gameweek now — the column header carries the competition.
+  const classicWeekly = weeklyLogCards(getSheet(data, "weekly_manager_log"), data.meta.lastFinishedGw, (row) => `GW${row.Gameweek ?? ""}`);
+  const challengeWeekly = weeklyLogCards(getSheet(data, "fpl_challenge_weekly_log"), data.meta.lastFinishedGw, (row) => `GW${row.Gameweek ?? ""}`);
   const months: HofCard[] = [
     ...monthlyCards(data, "classic_monthly_", "Classic"),
     ...monthlyCards(data, "h2h_monthly_", "H2H"),
@@ -141,7 +158,8 @@ export function HallOfFame({ data }: { data: DashboardData }) {
   // each get their own clean row instead of clumping together.
   const monthsLive = months.filter((c) => c.provisional);
   const monthsDone = months.filter((c) => !c.provisional);
-  const empty = weekly.length === 0 && months.length === 0;
+  const hasWeekly = classicWeekly.length > 0 || challengeWeekly.length > 0;
+  const empty = !hasWeekly && months.length === 0;
 
   return (
     <div>
@@ -154,7 +172,15 @@ export function HallOfFame({ data }: { data: DashboardData }) {
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          <Section title="Managers of the Week" cards={weekly} />
+          {hasWeekly && (
+            <div>
+              <h3 className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[--muted]">Managers of the Week</h3>
+              <div className="grid grid-cols-2 gap-2.5">
+                <WeekColumn title="Classic" color="var(--lime)" cards={classicWeekly} />
+                <WeekColumn title="Challenge" color="#4ad9ff" cards={challengeWeekly} />
+              </div>
+            </div>
+          )}
           <Section title="Manager of the Month · Live" cards={monthsLive} />
           <Section title="Manager of the Month · Finished" cards={monthsDone} />
         </div>
