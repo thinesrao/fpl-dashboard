@@ -28,3 +28,12 @@ test("isMonthComplete is false mid-month and true once the last GW finishes", ()
 test("isMonthComplete defaults unknown months to complete", () => {
   expect(isMonthComplete("Juneuary", 1)).toBe(true);
 });
+
+test("isMonthComplete prefers the live monthLastGw map over the fallback", () => {
+  // Real 2026/27: August ends at GW2 (GW3 deadline is September). The live map
+  // must win over the hardcoded fallback (which says GW3).
+  const map = { August: 2, September: 5 };
+  expect(isMonthComplete("August", 2, map)).toBe(true); // final by the real calendar
+  expect(isMonthComplete("September", 4, map)).toBe(false);
+  expect(isMonthComplete("september", 5, map)).toBe(true); // case-insensitive
+});

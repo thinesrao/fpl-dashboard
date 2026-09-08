@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { DashboardData } from "@/lib/types";
 import { verdict, talkingPoints } from "@/lib/story";
+import { resultsStatus } from "@/lib/results-status";
 import { Header } from "./Header";
 import { LiveSection } from "./LiveSection";
 import { OverlayProvider } from "./OverlayContext";
@@ -22,7 +23,7 @@ export function DashboardShell({ data }: { data: DashboardData }) {
       <Header gameweek={data.meta.lastFinishedGw} lastUpdated={data.meta.lastUpdatedUtc} />
       <main className="mx-auto max-w-5xl px-5 pb-16">
         <LiveSection />
-        <VerdictHero v={verdict(data)} gameweek={data.meta.lastFinishedGw} />
+        <VerdictHero v={verdict(data)} gameweek={data.meta.lastFinishedGw} status={resultsStatus(data.meta)} />
 
         <section className="pb-8">
           <h2 className="font-display mb-4 text-[13px] uppercase tracking-[0.2em] text-[--muted]">

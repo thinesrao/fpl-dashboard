@@ -9,6 +9,11 @@ on:
 
   # This line is ESSENTIAL for the "Run workflow" button to appear
   workflow_dispatch:
+    inputs:
+      penalties_reviewed:
+        description: "Mark manual penalties as reviewed/final through the current gameweek (set by the admin Publish button)"
+        type: boolean
+        default: false
 
   # Run the test suite on every push and PR (see the `test` job below)
   push:
@@ -48,6 +53,10 @@ jobs:
           GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Prior published metadata (to carry the penalty-review marker forward)
+          # and the admin Publish signal that advances it.
+          DASHBOARD_URL: ${{ vars.DASHBOARD_URL }}
+          PENALTIES_REVIEWED: ${{ github.event.inputs.penalties_reviewed }}
 
       - name: Set up Node
         if: steps.gate.outputs.run == 'true' || github.event_name == 'workflow_dispatch'

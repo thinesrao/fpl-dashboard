@@ -13,6 +13,8 @@ export async function dispatchPipeline(
       "X-GitHub-Api-Version": "2022-11-28",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ ref: "main" }),
+    // Admin Publish means "the manual penalties are reviewed" — advance the
+    // finalised marker to the current gameweek (see pipeline_meta.py).
+    body: JSON.stringify({ ref: "main", inputs: { penalties_reviewed: "true" } }),
   });
 }

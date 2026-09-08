@@ -20,6 +20,12 @@ from penalty_source import fetch_penalty_events, get_supabase_client
 from dashboard_export import build_dashboard_payload, write_dashboard_json
 from retry_util import retry_transient
 from gw_scores_export import build_gw_scores_wide
+from pipeline_meta import (
+    fetch_prior_reviewed_gw,
+    group_gameweeks_by_month,
+    month_last_gw_map,
+    resolve_penalties_reviewed_gw,
+)
 
 # --- Configuration ---
 # NOTE: before updating the league IDs below, also run scripts/migrate_new_season_sheet.py
@@ -194,6 +200,10 @@ def main():
     print(f"Detected last finished gameweek as GW{last_finished_gw}")
 
     gw_month_map = get_gameweek_to_month_map(fpl_data)
+    # Deadline-derived month ranges (shared by Classic and H2H monthly tables)
+    # and per-gameweek data_checked (bonus-settled) flags.
+    month_to_gws = group_gameweeks_by_month(gw_month_map)
+    data_checked_by_gw = {gw['id']: bool(gw.get('data_checked')) for gw in fpl_data['events']}
     manager_df = pd.DataFrame(classic_league_data['standings']['results'])[['entry', 'player_name', 'entry_name']].rename(
         columns={'entry': 'manager_id', 'player_name': 'manager_name', 'entry_name': 'team_name'}
     )
@@ -587,15 +597,10 @@ def main():
         bad_luck_totals = calculate_bad_luck_h2h(match_records, manager_df['manager_id'].tolist())
         worksheets_to_write['bad_luck_h2h'] = build_standings_df(bad_luck_totals, manager_df)
 
-        # Define the official FPL monthly gameweek ranges
-        FPL_MONTH_MAP = {
-            "August": list(range(1, 4)), "September": list(range(4, 7)),
-            "October": list(range(7, 10)), "November": list(range(10, 14)),
-            "December": list(range(14, 20)), "January": list(range(20, 25)),
-            "February": list(range(25, 29)), "March": list(range(29, 32)),
-            "April": list(range(32, 35)), "May": list(range(35, 39)),
-        }
-        
+        # Monthly gameweek ranges come from the live FPL deadlines (month_to_gws),
+        # so a postponed fixture that shifts a deadline never lands a gameweek in
+        # the wrong month. Same source of truth as the Classic monthly tables.
+
         # Create a historical log of H2H standings at the end of each GW
         h2h_history = []
         for gw in range(1, last_finished_gw + 1):
@@ -606,7 +611,7 @@ def main():
                     h2h_history.append({'gameweek': gw, 'manager_id': team['entry'], 'total_h2h_points': team['total']})
         h2h_history_df = pd.DataFrame(h2h_history)
 
-        for month_name, gws_in_month in FPL_MONTH_MAP.items():
+        for month_name, gws_in_month in month_to_gws.items():
             if not gws_in_month or gws_in_month[0] > last_finished_gw:
                 continue
 
@@ -728,7 +733,28 @@ def main():
         ])
         worksheets_to_write["cup_winner"] = cup_df
 
-    metadata_df = pd.DataFrame([{'last_finished_gw': last_finished_gw, 'last_updated_utc': datetime.now(timezone.utc).isoformat()}])
+    # Manual-penalty review marker: carried forward from the previously published
+    # dashboard.json, advanced to the current gameweek only when the admin
+    # triggered this run via Publish (PENALTIES_REVIEWED=true).
+    admin_triggered = os.environ.get("PENALTIES_REVIEWED", "").lower() == "true"
+    # Fail-closed on scheduled runs: a bad read must not reset the persisted
+    # marker (see fetch_prior_reviewed_gw). Abort rather than republish a 0.
+    prior_reviewed_gw = fetch_prior_reviewed_gw(
+        os.environ.get("DASHBOARD_URL"),
+        admin_triggered,
+        lambda url: requests.get(url, timeout=30),
+    )
+    penalties_reviewed_through_gw = resolve_penalties_reviewed_gw(
+        prior_reviewed_gw, last_finished_gw, admin_triggered
+    )
+
+    metadata_df = pd.DataFrame([{
+        'last_finished_gw': last_finished_gw,
+        'last_finished_gw_data_checked': bool(data_checked_by_gw.get(last_finished_gw, False)),
+        'penalties_reviewed_through_gw': penalties_reviewed_through_gw,
+        'month_last_gw': json.dumps(month_last_gw_map(gw_month_map)),
+        'last_updated_utc': datetime.now(timezone.utc).isoformat(),
+    }])
     worksheets_to_write["metadata"] = metadata_df
     
     # --- Generate _player_names sheet for dropdown reference ---
